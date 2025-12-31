@@ -1,11 +1,10 @@
 package com.example.ecommerce.domain.cart;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public interface CartRepository {
 
-    Optional<Cart> findActiveByUserId(UUID userId);
+    Optional<Cart> findById(CartId id);
 
     void save(Cart cart);
 }

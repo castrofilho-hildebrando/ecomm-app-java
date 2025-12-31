@@ -1,5 +1,1 @@
-/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/cart/AddItemToCartUseCaseTest.java
-/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/cart/InMemoryCartRepository.java
-/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/cart/InMemoryProductRepository.java
-/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/cart/RemoveItemFromCartUseCaseTest.java
-/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/cart/shouldFailWhenProductDoesNotExist.java
+/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/infrastructure/web/cart/CartControllerTest.java

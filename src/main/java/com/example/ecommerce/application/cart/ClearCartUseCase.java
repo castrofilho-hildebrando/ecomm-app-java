@@ -1,30 +1,22 @@
 package com.example.ecommerce.application.cart;
 
-import com.example.ecommerce.domain.cart.Cart;
-import com.example.ecommerce.domain.cart.CartRepository;
-
-import java.util.UUID;
+import com.example.ecommerce.domain.cart.*;
 
 public class ClearCartUseCase {
 
     private final CartRepository cartRepository;
 
-    public ClearCartUseCase(
-            CartRepository cartRepository
-    ) {
+    public ClearCartUseCase(CartRepository cartRepository) {
         this.cartRepository = cartRepository;
     }
 
-    public void execute(UUID userId) {
+    public void execute(String cartId) {
+        CartId cid = new CartId(cartId);
 
-        Cart cart = cartRepository.findActiveByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Cart not found"));
-    
-        if (cart.isEmpty()) {
-            throw new IllegalStateException("Cart is already empty");
-        }
-        
-        cart.emptyCart();
+        Cart cart = cartRepository.findById(cid)
+                .orElseThrow(() -> new IllegalStateException("Cart not found"));
+
+        cart.clear();
         cartRepository.save(cart);
     }
 }

@@ -1,27 +1,24 @@
 package com.example.ecommerce.domain.cart;
 
-import java.math.BigDecimal;
-import java.util.UUID;
+public class CartItem {
 
-public record CartItem(
-        UUID productId,
-        BigDecimal unitPrice,
-        int quantity
-) {
+    private final ProductId productId;
+    private final int quantity;
 
-    public CartItem {
-        if (productId == null) {
-            throw new IllegalArgumentException("Product id is required");
-        }
-        if (unitPrice == null || unitPrice.signum() <= 0) {
-            throw new IllegalArgumentException("Unit price must be positive");
-        }
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than zero");
-        }
+    public CartItem(ProductId productId, int quantity) {
+        this.productId = productId;
+        this.quantity = quantity;
     }
 
-    public BigDecimal subtotal() {
-        return unitPrice.multiply(BigDecimal.valueOf(quantity));
+    public ProductId getProductId() {
+        return productId;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    CartItem increase(CartItem other) {
+        return new CartItem(productId, this.quantity + other.quantity);
     }
 }

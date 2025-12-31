@@ -1,42 +1,23 @@
 package com.example.ecommerce.application.cart;
 
-import com.example.ecommerce.domain.cart.Cart;
-import com.example.ecommerce.domain.cart.CartRepository;
-import com.example.ecommerce.domain.product.ProductRepository;
-
-import java.util.UUID;
+import com.example.ecommerce.domain.cart.*;
 
 public class AddItemToCartUseCase {
 
-    private final ProductRepository productRepository;
     private final CartRepository cartRepository;
 
-    public AddItemToCartUseCase(
-            ProductRepository productRepository,
-            CartRepository cartRepository
-    ) {
-        this.productRepository = productRepository;
+    public AddItemToCartUseCase(CartRepository cartRepository) {
         this.cartRepository = cartRepository;
     }
 
-    public void execute(UUID userId, UUID productId, int quantity) {
+    public void execute(String cartId, String productId, int quantity) {
+        CartId cid = new CartId(cartId);
+        ProductId pid = new ProductId(productId);
 
-        var product = productRepository.findById(productId)
-            .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        Cart cart = cartRepository.findById(cid)
+                .orElseGet(() -> new Cart(cid));
 
-        if (!product.isActive()) {
-            throw new IllegalStateException("Product is not active");
-        }
-
-        Cart cart = cartRepository.findActiveByUserId(userId)
-                .orElseGet(() -> new Cart(userId));
-
-        cart.addItem(
-                product.id(),
-                product.price(),
-                quantity
-        );
-
+        cart.addItem(pid, quantity);
         cartRepository.save(cart);
     }
 }
