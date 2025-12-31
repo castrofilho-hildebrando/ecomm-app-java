@@ -1,0 +1,5 @@
+com/example/ecommerce/application/cart/InMemoryCartRepository.class
+com/example/ecommerce/application/cart/shouldFailWhenProductDoesNotExist.class
+com/example/ecommerce/application/cart/AddItemToCartUseCaseTest.class
+com/example/ecommerce/application/cart/RemoveItemFromCartUseCaseTest.class
+com/example/ecommerce/application/cart/InMemoryProductRepository.class
