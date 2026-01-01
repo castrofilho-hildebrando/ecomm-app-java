@@ -24,7 +24,7 @@ class CartControllerTest {
     private MockMvc mockMvc;
 
     @Test
-    void should_return_empty_cart_when_cart_exists_but_has_no_items() throws Exception {
+    void shouldReturnEmptyCartWhenCartExistsButHasNoItems() throws Exception {
         mockMvc.perform(get("/carts/cart-1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.cartId").value("cart-1"))
