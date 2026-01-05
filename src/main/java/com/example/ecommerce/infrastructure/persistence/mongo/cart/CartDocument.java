@@ -24,11 +24,11 @@ public class CartDocument {
         this.id = id;
     }
 
-    public String getOwner() {
+    public String getOwnerId() {
         return ownerId;
     }
 
-    public void setOwner(String ownerId) {
+    public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
     }
 

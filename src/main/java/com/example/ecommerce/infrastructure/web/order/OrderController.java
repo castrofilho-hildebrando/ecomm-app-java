@@ -18,9 +18,18 @@ public class OrderController {
         this.getOrderUseCase = getOrderUseCase;
     }
 
+    @PostMapping("/from-cart/{cartId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    public OrderView placeFromCart(
+        @PathVariable String cartId
+    ) {
+        CurrentUser currentUser = new FixedCurrentUser("user-1");
+        return placeOrderFromCartUseCase.execute(cartId, currentUser);
+    }
+
     @PostMapping("/{orderId}/pay")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void pay(@PathVariable String orderId) {
+    public OrderView pay(@PathVariable String orderId) {
         payOrderUseCase.execute(orderId);
     }
 

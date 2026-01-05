@@ -3,6 +3,7 @@ package com.example.ecommerce.infrastructure.mapper;
 import com.example.ecommerce.domain.cart.Cart;
 import com.example.ecommerce.domain.cart.CartId;
 import com.example.ecommerce.domain.cart.ProductId;
+import com.example.ecommerce.domain.user.UserId;
 import com.example.ecommerce.infrastructure.persistence.mongo.cart.CartDocument;
 
 import java.util.Map;

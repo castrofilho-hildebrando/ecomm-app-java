@@ -37,5 +37,8 @@ public class PayOrderUseCase {
             consumer.accept(event);
         }
 
+        for (DomainEvent event : aggregate.pullDomainEvents()) {
+            publisher.publish(event);
+        }
     }
 }

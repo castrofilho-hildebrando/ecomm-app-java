@@ -24,4 +24,13 @@ public class OrderConfig {
     ) {
         return new GetOrderUseCase(orderRepository);
     }
+
+    @Bean
+    public PlaceOrderFromCartUseCase(
+            CartRepository cartRepository,
+            OrderRepository orderRepository,
+            DomainEventPublisher eventPublisher
+    ) {
+        return new PlaceOrderFromCartUseCase(cartRepository, orderRepository, eventPublisher);
+    }
 }

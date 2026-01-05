@@ -27,4 +27,9 @@ public class MongoCartRepository implements CartRepository {
     public void save(Cart cart) {
         repository.save(CartMapper.toDocument(cart));
     }
+
+    @Override
+    public void delete(Cart cart) {
+        springDataCartRepository.deleteById(cart.value());
+    }
 }

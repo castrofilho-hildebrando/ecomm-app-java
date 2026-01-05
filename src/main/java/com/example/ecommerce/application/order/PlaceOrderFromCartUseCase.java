@@ -64,6 +64,10 @@ public class PlaceOrderFromCartUseCase {
             consumer.accept(event);
         }
 
+        for (DomainEvent event : aggregate.pullDomainEvents()) {
+            publisher.publish(event);
+        }
+
         cart.clear();
         cartRepository.save(cart);
     }

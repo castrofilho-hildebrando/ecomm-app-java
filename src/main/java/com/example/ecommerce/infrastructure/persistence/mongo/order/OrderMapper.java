@@ -1,4 +1,4 @@
-package com.example.ecommerce.infrastructure.mapper;
+package com.example.ecommerce.infrastructure.persistence.order.mapper;
 
 import com.example.ecommerce.domain.order.Order;
 import com.example.ecommerce.domain.order.OrderId;

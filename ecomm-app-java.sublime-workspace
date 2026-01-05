@@ -4,8 +4,44 @@
 		"selected_items":
 		[
 			[
+				"Cu",
+				"CurrentUser"
+			],
+			[
+				"cu",
+				"CurrentUser"
+			],
+			[
+				"Cart",
+				"CartId"
+			],
+			[
+				"get",
+				"GetOrderUseCase"
+			],
+			[
+				"D",
+				"DomainEvent"
+			],
+			[
+				"Ev",
+				"EventConsumer"
+			],
+			[
+				"E",
+				"EventConsumer"
+			],
+			[
 				"Or",
-				"OrderCreatedEvent"
+				"OrderView"
+			],
+			[
+				"or",
+				"orderRepository"
+			],
+			[
+				"O",
+				"OrderId"
 			],
 			[
 				"A",
@@ -14,10 +50,6 @@
 			[
 				"im",
 				"import"
-			],
-			[
-				"D",
-				"DomainEventPublisher"
 			],
 			[
 				"Ca",
@@ -63,75 +95,6 @@
 	},
 	"buffers":
 	[
-		{
-			"contents": "package com.example.ecommerce.application.order;\n\nimport com.example.ecommerce.application.event.DomainEventPublisher;\nimport com.example.ecommerce.domain.order.Order;\nimport com.example.ecommerce.domain.order.OrderId;\nimport com.example.ecommerce.domain.order.OrderRepository;\n\npublic class PayOrderUseCase {\n\n    private final OrderRepository orderRepository;\n    private final DomainEventPublisher eventPublisher;\n\n    public PayOrderUseCase(\n            OrderRepository orderRepository,\n            DomainEventPublisher eventPublisher\n    ) {\n        this.orderRepository = orderRepository;\n        this.eventPublisher = eventPublisher; ttttttttttt rrrrrrrrrrrrrrrrrrrr \n    }\n\n    public void execute(String orderId) {\n        OrderId id = new OrderId(orderId);\n\n        Order order = orderRepository.findById(id)\n                .orElseThrow(() ->\n                        new IllegalStateException(\"Order not found: \" + orderId)\n                );\n\n        order.markAsPaid();\n        orderRepository.save(order);\n\n        order.pullDomainEvents()\n                .forEach(eventPublisher::publish);\n    }\n}\n",
-			"file": "src/main/java/com/example/ecommerce/application/order/PayOrderUseCase.java",
-			"file_size": 1079,
-			"file_write_time": 134119198647975200,
-			"settings":
-			{
-				"buffer_size": 1113,
-				"line_ending": "Unix",
-				"name": "package com.example.ecommerce.application.order;"
-			},
-			"undo_stack":
-			[
-				[
-					2,
-					1,
-					"",
-					null,
-					"AQAAAAAAAAAAAAAANwQAAAAAAAAAAAAA",
-					"AwAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8L8AAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwvw"
-				],
-				[
-					2,
-					1,
-					"",
-					null,
-					"AQAAADYBAAAAAAAANwEAAAAAAAAAAAAA",
-					"AgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAAA2AQAAAAAAADYBAAAAAAAAAAAAAAAA8L8"
-				],
-				[
-					7,
-					1,
-					"right_delete",
-					null,
-					"AQAAADYBAAAAAAAANgEAAAAAAAABAAAAcg",
-					"AgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAAA2AQAAAAAAADYBAAAAAAAAAAAAAAAA8L8"
-				],
-				[
-					10,
-					1,
-					"insert",
-					{
-						"characters": " ttttttttttt"
-					},
-					"DAAAAIACAAAAAAAAgQIAAAAAAAAAAAAAgQIAAAAAAACCAgAAAAAAAAAAAACCAgAAAAAAAIMCAAAAAAAAAAAAAIMCAAAAAAAAhAIAAAAAAAAAAAAAhAIAAAAAAACFAgAAAAAAAAAAAACFAgAAAAAAAIYCAAAAAAAAAAAAAIYCAAAAAAAAhwIAAAAAAAAAAAAAhwIAAAAAAACIAgAAAAAAAAAAAACIAgAAAAAAAIkCAAAAAAAAAAAAAIkCAAAAAAAAigIAAAAAAAAAAAAAigIAAAAAAACLAgAAAAAAAAAAAACLAgAAAAAAAIwCAAAAAAAAAAAAAA",
-					"AgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAACAAgAAAAAAAIACAAAAAAAAAAAAAAAA8L8"
-				],
-				[
-					11,
-					1,
-					"insert",
-					{
-						"characters": " rrrrrrrrrrrrrrrrrrrr"
-					},
-					"FQAAAIwCAAAAAAAAjQIAAAAAAAAAAAAAjQIAAAAAAACOAgAAAAAAAAAAAACOAgAAAAAAAI8CAAAAAAAAAAAAAI8CAAAAAAAAkAIAAAAAAAAAAAAAkAIAAAAAAACRAgAAAAAAAAAAAACRAgAAAAAAAJICAAAAAAAAAAAAAJICAAAAAAAAkwIAAAAAAAAAAAAAkwIAAAAAAACUAgAAAAAAAAAAAACUAgAAAAAAAJUCAAAAAAAAAAAAAJUCAAAAAAAAlgIAAAAAAAAAAAAAlgIAAAAAAACXAgAAAAAAAAAAAACXAgAAAAAAAJgCAAAAAAAAAAAAAJgCAAAAAAAAmQIAAAAAAAAAAAAAmQIAAAAAAACaAgAAAAAAAAAAAACaAgAAAAAAAJsCAAAAAAAAAAAAAJsCAAAAAAAAnAIAAAAAAAAAAAAAnAIAAAAAAACdAgAAAAAAAAAAAACdAgAAAAAAAJ4CAAAAAAAAAAAAAJ4CAAAAAAAAnwIAAAAAAAAAAAAAnwIAAAAAAACgAgAAAAAAAAAAAACgAgAAAAAAAKECAAAAAAAAAAAAAA",
-					"AgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAACMAgAAAAAAAIwCAAAAAAAAAAAAAAAA8L8"
-				],
-				[
-					12,
-					1,
-					"insert",
-					{
-						"characters": " "
-					},
-					"AQAAAKECAAAAAAAAogIAAAAAAAAAAAAA",
-					"AgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAAChAgAAAAAAAKECAAAAAAAAAAAAAAAA8L8"
-				]
-			]
-		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -200,76 +163,101 @@
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/event",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/order",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/event",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/order",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/mapper",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/memory",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/memory/cart",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/memory/order",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/cart",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/order",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/cart",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/domain",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/domain/cart",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/domain/order",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/infrastructure",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/infrastructure/web",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/infrastructure/web/cart"
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/infrastructure/web"
 	],
 	"file_history":
 	[
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/CartDocument.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/config/OrderConfig.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/order/PayOrderUseCase.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/cart/CartController.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/cart/AddItemRequest.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/domain/cart/CartTest.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/AddItemToCartUseCase.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/infrastructure/web/cart/CartControllerTest.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/cart/CartRepository.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/cart/CartResponse.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/order/PlaceOrderFromCartUseCase.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/ClearCartUseCase.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/RemoveItemFromCartUseCase.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/UpdateCartItemQuantityUseCase.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/GetCartUseCase.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/security/CurrentUser.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/security/FixedCurrentUser.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/exception/CartNotFoundException.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/CartOwnershipPolicy.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/order/GetOrderUseCase.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/CartMapper.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/cart/Cart.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/CartItemView.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/user/UserId.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/user/UserRole.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/user/User.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/user/UserRepository.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/domain/order/OrderControllerTest.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/order/OrderController.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/event/DomainEvent.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/event/EventConsumer.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/order/OrderView.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order/GetOrderUseCase.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order/OrderView.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order/OrderItemView.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order/PlaceOrderFromCartUseCaseTest.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order/PayOrderUseCaseTest.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/order/InMemoryOrderRepository.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/domain/order/OrderTest.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/order/OrderControllerTest.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/ApiExceptionHandler.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/exception/OrderAlreadyPaidException.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/order/Order.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/exception/OrderNotFoundException.java",
+		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order/OrderUseCaseTest.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/event/DomainEventPublisher.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order/FakeDomainEventPublisher.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/mapper/OrderMapper.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order/OrderDocument.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order/CreateOrderFromCartUseCaseTest.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/order/event/OrderCreatedEvent.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/order/Order.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/event/OrderPaidEvent.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/order/CreateOrderFromCartUseCase.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/domain/order/OrderTest.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/event/LoggingDomainEventPublisher.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/event/DomainEventPublisher.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/event/OrderCreatedEvent.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/event/DomainEvent.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order/OrderTest.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/order/OrderStatus.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/domain/cart/CartTest.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/order/FakeOrderRepository.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/infrastructure/web/cart/CartControllerTest.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/cart/CartController.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/cart/CartResponse.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/CartController.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/UpdateItemQuantityRequest.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/CartItemResponse.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/AddItemRequest.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/CartResponse.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/CartView.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/cart/Cart.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/order/OrderId.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/mapper/CartMapper.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/CartItemView.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/GetCartUseCase.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/RemoveItemFromCartUseCase.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/UpdateCartItemQuantityUseCase.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/AddItemToCartUseCase.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order/OrderItemDocument.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/MongoCartRepository.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/order/OrderFactory.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/order/OrderRepository.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/CartDocument.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/order/OrderItem.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order/MongoOrderRepository.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order/SpringDataOrderRepository.java",
@@ -277,15 +265,12 @@
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/exception/EmptyCartException.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/memory/cart/InMemoryCartRepository.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/SpringDataCartRepository.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/ClearCartUseCase.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/build.gradle",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/gradle/libs.versions.toml",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/exception/ProductPriceMustBePositiveException.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/product/Product.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/ApiExceptionHandler.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/exception/InvalidQuantityException.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/exception/CartItemNotFoundException.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/exception/CartNotFoundException.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/exception/DomainException.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/EcommerceApplication.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/pom.xml",
@@ -297,7 +282,6 @@
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/infrastructure/persistence/memory/cart/InMemoryCartRepository.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/cart/AddItemToCartUseCaseTest.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/cart/CartItem.java",
-		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/domain/cart/CartRepository.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/ProductId.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/cart/CartId.java",
 		"/home/unitytech/UnityTech/Apps/ecomm-app-java/src/test/java/com/example/ecommerce/application/cart/RemoveItemFromCartUseCaseTest.java",
@@ -330,38 +314,11 @@
 		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/controllers/addressController.ts",
 		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/controllers/userController.ts",
 		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/controllers/productController.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/files-list.sh",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/middlewares/authMiddleware.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/infra/repositories/MongoOrderRepository.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/errors/OnlyAdminCanChangeOrderStatusError.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/errors/InvalidStatusTransactionError.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/errors/OrderCannotBeCancelledError.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/errors/OrderWithoutItemsError.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/errors/OrderNotFoundError.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/errors/AccessDeniedError.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/errors/InvalidErrorTotalError.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/application/usecases/GetAllOrdersUseCaseImpl.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/errors/DomainError.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/entities/Order.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/controllers/OrderWithoutItemsError.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/application/ports/OrderRepository.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/application/usecases/GetAllOrdersUseCase.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/application/usecases/ListMyOrdersUseCaseImpl.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/application/usecases/ListMyOrdersUseCase.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/application/usecases/CheckoutUseCase.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/eslint_errors.txt",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/controllers/adminController.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/application/usecases/RemoveItemFromCartUseCaseImpl.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/package.json",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/errors/ProductNotFoundError.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/domain/errors/CheckoutErrors.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/infra/repositories/MongoProductRepository.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/@types/express/index.d.ts",
-		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/src/routes/cartRoutes.ts"
+		"/home/unitytech/UnityTech/Apps/fs-app-ecomm/backend/files-list.sh"
 	],
 	"find":
 	{
-		"height": 34.0
+		"height": 44.0
 	},
 	"find_in_files":
 	{
@@ -375,6 +332,8 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"count",
+			"repo",
 			"orderitem"
 		],
 		"highlight": true,
@@ -397,43 +356,12 @@
 		{
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "src/main/java/com/example/ecommerce/application/order/PayOrderUseCase.java",
-					"selected": true,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1113,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								674,
-								674
-							]
-						],
-						"settings":
-						{
-							"auto_name": "package com.example.ecommerce.application.order;",
-							"syntax": "Packages/Java/Java.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 83.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"stack_multiselect": false,
-					"type": "text"
-				}
 			]
 		}
 	],
 	"incremental_find":
 	{
-		"height": 34.0
+		"height": 36.0
 	},
 	"input":
 	{
@@ -480,7 +408,7 @@
 	"project": "ecomm-app-java.sublime-project",
 	"replace":
 	{
-		"height": 64.0
+		"height": 68.0
 	},
 	"save_all_on_build": true,
 	"select_file":

@@ -34,14 +34,13 @@ public class CartController {
     @PostMapping("/{cartId}/items")
     public CartResponse addItem(
             @PathVariable String cartId,
-            @PathVariable String userId,
+            Spring userId,
             @RequestBody AddItemRequest request
     ) {
         CurrentUser currentUser = new FixedCurrentUser("user-1");
         CartView view = addItemToCartUseCase.execute(
                 cartId,
                 currentUser,
-                request.userId,
                 request.productId(),
                 request.quantity()
         );

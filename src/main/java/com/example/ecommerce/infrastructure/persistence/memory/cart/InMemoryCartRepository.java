@@ -21,4 +21,9 @@ public class InMemoryCartRepository implements CartRepository {
     public void save(Cart cart) {
         storage.put(cart.getId().value(), cart);
     }
+
+    @Override
+    public void delete(Cart cart) {
+        storage.remove(cart.value());
+    }
 }

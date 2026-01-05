@@ -56,9 +56,7 @@ public class Order {
 
     public void cancel() {
         if (status == OrderStatus.PAID) {
-            throw new IllegalStateException(
-                    "Paid order cannot be cancelled"
-            );
+            throw new PaidOrderCannotBeCancelledException(id);
         }
         this.status = OrderStatus.CANCELLED;
     }

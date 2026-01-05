@@ -1,6 +1,6 @@
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/order/OrderController.java
-LAST_MODIFIED: 2026-01-04 08:34:18
+LAST_MODIFIED: 2026-01-05 07:20:19
 ============================================================
 
     package com.example.ecommerce.infrastructure.web.order;
@@ -23,9 +23,18 @@ LAST_MODIFIED: 2026-01-04 08:34:18
             this.getOrderUseCase = getOrderUseCase;
         }
     
+        @PostMapping("/from-cart/{cartId}")
+        @ResponseStatus(HttpStatus.CREATED)
+        public OrderView placeFromCart(
+            @PathVariable String cartId
+        ) {
+            CurrentUser currentUser = new FixedCurrentUser("user-1");
+            return placeOrderFromCartUseCase.execute(cartId, currentUser);
+        }
+    
         @PostMapping("/{orderId}/pay")
         @ResponseStatus(HttpStatus.NO_CONTENT)
-        public void pay(@PathVariable String orderId) {
+        public OrderView pay(@PathVariable String orderId) {
             payOrderUseCase.execute(orderId);
         }
     
@@ -86,7 +95,7 @@ LAST_MODIFIED: 2026-01-03 15:36:21
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/cart/CartController.java
-LAST_MODIFIED: 2026-01-05 05:52:50
+LAST_MODIFIED: 2026-01-05 06:21:41
 ============================================================
 
     package com.example.ecommerce.infrastructure.web.cart;
@@ -125,14 +134,13 @@ LAST_MODIFIED: 2026-01-05 05:52:50
         @PostMapping("/{cartId}/items")
         public CartResponse addItem(
                 @PathVariable String cartId,
-                @PathVariable String userId,
+                Spring userId,
                 @RequestBody AddItemRequest request
         ) {
             CurrentUser currentUser = new FixedCurrentUser("user-1");
             CartView view = addItemToCartUseCase.execute(
                     cartId,
                     currentUser,
-                    request.userId,
                     request.productId(),
                     request.quantity()
             );
@@ -196,20 +204,21 @@ LAST_MODIFIED: 2026-01-05 05:52:50
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/cart/AddItemRequest.java
-LAST_MODIFIED: 2026-01-02 17:03:47
+LAST_MODIFIED: 2026-01-05 06:46:57
 ============================================================
 
     package com.example.ecommerce.infrastructure.web.cart;
     
     public record AddItemRequest(
             String productId,
+            String userId,
             int quantity
     ) {
     }
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/cart/CartResponse.java
-LAST_MODIFIED: 2026-01-02 17:16:21
+LAST_MODIFIED: 2026-01-05 06:47:15
 ============================================================
 
     package com.example.ecommerce.infrastructure.web.cart;
@@ -263,10 +272,10 @@ LAST_MODIFIED: 2026-01-02 17:04:17
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order/OrderMapper.java
-LAST_MODIFIED: 2026-01-03 07:36:36
+LAST_MODIFIED: 2026-01-05 06:28:35
 ============================================================
 
-    package com.example.ecommerce.infrastructure.mapper;
+    package com.example.ecommerce.infrastructure.persistence.order.mapper;
     
     import com.example.ecommerce.domain.order.Order;
     import com.example.ecommerce.domain.order.OrderId;
@@ -443,7 +452,7 @@ LAST_MODIFIED: 2026-01-02 15:24:10
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/CartMapper.java
-LAST_MODIFIED: 2026-01-04 19:44:05
+LAST_MODIFIED: 2026-01-05 06:27:42
 ============================================================
 
     package com.example.ecommerce.infrastructure.mapper;
@@ -451,6 +460,7 @@ LAST_MODIFIED: 2026-01-04 19:44:05
     import com.example.ecommerce.domain.cart.Cart;
     import com.example.ecommerce.domain.cart.CartId;
     import com.example.ecommerce.domain.cart.ProductId;
+    import com.example.ecommerce.domain.user.UserId;
     import com.example.ecommerce.infrastructure.persistence.mongo.cart.CartDocument;
     
     import java.util.Map;
@@ -489,7 +499,7 @@ LAST_MODIFIED: 2026-01-04 19:44:05
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/MongoCartRepository.java
-LAST_MODIFIED: 2026-01-02 14:28:40
+LAST_MODIFIED: 2026-01-05 06:31:12
 ============================================================
 
     package com.example.ecommerce.infrastructure.persistence.mongo.cart;
@@ -521,11 +531,16 @@ LAST_MODIFIED: 2026-01-02 14:28:40
         public void save(Cart cart) {
             repository.save(CartMapper.toDocument(cart));
         }
+    
+        @Override
+        public void delete(Cart cart) {
+            springDataCartRepository.deleteById(cart.value());
+        }
     }
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/CartDocument.java
-LAST_MODIFIED: 2026-01-04 20:04:38
+LAST_MODIFIED: 2026-01-05 06:26:43
 ============================================================
 
     package com.example.ecommerce.infrastructure.persistence.mongo.cart;
@@ -554,11 +569,11 @@ LAST_MODIFIED: 2026-01-04 20:04:38
             this.id = id;
         }
     
-        public String getOwner() {
+        public String getOwnerId() {
             return ownerId;
         }
     
-        public void setOwner(String ownerId) {
+        public void setOwnerId(String ownerId) {
             this.ownerId = ownerId;
         }
     
@@ -629,7 +644,7 @@ LAST_MODIFIED: 2026-01-03 15:55:44
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/memory/cart/InMemoryCartRepository.java
-LAST_MODIFIED: 2026-01-02 12:54:55
+LAST_MODIFIED: 2026-01-05 06:32:31
 ============================================================
 
     package com.example.ecommerce.infrastructure.persistence.memory.cart;
@@ -655,11 +670,16 @@ LAST_MODIFIED: 2026-01-02 12:54:55
         public void save(Cart cart) {
             storage.put(cart.getId().value(), cart);
         }
+    
+        @Override
+        public void delete(Cart cart) {
+            storage.remove(cart.value());
+        }
     }
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/config/CartConfig.java
-LAST_MODIFIED: 2025-12-31 12:45:53
+LAST_MODIFIED: 2026-01-05 07:34:06
 ============================================================
 
     package com.example.ecommerce.infrastructure.config;
@@ -678,11 +698,31 @@ LAST_MODIFIED: 2025-12-31 12:45:53
         ) {
             return new AddItemToCartUseCase(cartRepository);
         }
+    
+        @Bean
+        RemoveItemFromCartUseCase removeItemFromCartUseCase(CartRepository repo) {
+            return new RemoveItemFromCartUseCase(repo);
+        }
+    
+        @Bean
+        UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase(CartRepository repo) {
+            return new UpdateCartItemQuantityUseCase(repo);
+        }
+    
+        @Bean
+        ClearCartUseCase clearCartUseCase(CartRepository repo) {
+            return new ClearCartUseCase(repo);
+        }
+    
+        @Bean
+        GetCartUseCase getCartUseCase(CartRepository repo) {
+            return new GetCartUseCase(repo);
+        }
     }
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/infrastructure/config/OrderConfig.java
-LAST_MODIFIED: 2026-01-04 08:35:14
+LAST_MODIFIED: 2026-01-05 06:44:14
 ============================================================
 
     package com.example.ecommerce.infrastructure.config;
@@ -710,6 +750,15 @@ LAST_MODIFIED: 2026-01-04 08:35:14
                 OrderRepository orderRepository
         ) {
             return new GetOrderUseCase(orderRepository);
+        }
+    
+        @Bean
+        public PlaceOrderFromCartUseCase(
+                CartRepository cartRepository,
+                OrderRepository orderRepository,
+                DomainEventPublisher eventPublisher
+        ) {
+            return new PlaceOrderFromCartUseCase(cartRepository, orderRepository, eventPublisher);
         }
     }
 
@@ -758,7 +807,7 @@ LAST_MODIFIED: 2026-01-02 16:25:06
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/domain/order/Order.java
-LAST_MODIFIED: 2026-01-03 15:33:45
+LAST_MODIFIED: 2026-01-05 06:36:12
 ============================================================
 
     package com.example.ecommerce.domain.order;
@@ -819,9 +868,7 @@ LAST_MODIFIED: 2026-01-03 15:33:45
     
         public void cancel() {
             if (status == OrderStatus.PAID) {
-                throw new IllegalStateException(
-                        "Paid order cannot be cancelled"
-                );
+                throw new PaidOrderCannotBeCancelledException(id);
             }
             this.status = OrderStatus.CANCELLED;
         }
@@ -861,12 +908,15 @@ LAST_MODIFIED: 2026-01-02 14:24:09
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/domain/order/OrderItem.java
-LAST_MODIFIED: 2026-01-02 14:15:40
+LAST_MODIFIED: 2026-01-05 06:57:55
 ============================================================
 
     package com.example.ecommerce.domain.order;
     
     import com.example.ecommerce.domain.cart.ProductId;
+    import com.example.ecommerce.domain.exception.InvalidQuantityException;
+    
+    import java.util.Objects;
     
     public class OrderItem {
     
@@ -874,7 +924,10 @@ LAST_MODIFIED: 2026-01-02 14:15:40
         private final int quantity;
     
         public OrderItem(ProductId productId, int quantity) {
-            this.productId = productId;
+            this.productId = Objects.requireNonNull(productId, "ProductId is required");
+            if (quantity <= 0) {
+                throw new InvalidQuantityException(quantity);
+            }
             this.quantity = quantity;
         }
     
@@ -884,6 +937,43 @@ LAST_MODIFIED: 2026-01-02 14:15:40
     
         public int getQuantity() {
             return quantity;
+        }
+    
+        // Domain behavior examples
+        public OrderItem increaseQuantity(int amount) {
+            if (amount <= 0) {
+                throw new InvalidQuantityException(amount);
+            }
+            return new OrderItem(productId, this.quantity + amount);
+        }
+    
+        public OrderItem decreaseQuantity(int amount) {
+            if (amount <= 0 || amount > this.quantity) {
+                throw new InvalidQuantityException(amount);
+            }
+            return new OrderItem(productId, this.quantity - amount);
+        }
+    
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof OrderItem)) return false;
+            OrderItem that = (OrderItem) o;
+            return quantity == that.quantity &&
+                   productId.equals(that.productId);
+        }
+    
+        @Override
+        public int hashCode() {
+            return Objects.hash(productId, quantity);
+        }
+    
+        @Override
+        public String toString() {
+            return "OrderItem{" +
+                    "productId=" + productId +
+                    ", quantity=" + quantity +
+                    '}';
         }
     }
 
@@ -1051,7 +1141,7 @@ LAST_MODIFIED: 2025-12-31 16:41:58
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/domain/cart/CartRepository.java
-LAST_MODIFIED: 2025-12-31 16:54:56
+LAST_MODIFIED: 2026-01-05 07:25:03
 ============================================================
 
     package com.example.ecommerce.domain.cart;
@@ -1063,6 +1153,7 @@ LAST_MODIFIED: 2025-12-31 16:54:56
         Optional<Cart> findById(CartId id);
     
         void save(Cart cart);
+        void delete(CartId id);
     }
 
 ============================================================
@@ -1247,6 +1338,21 @@ LAST_MODIFIED: 2026-01-03 14:55:18
         }
     }
 ============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/PaidOrderCannotBeCancelledException.java
+LAST_MODIFIED: 2026-01-05 06:36:59
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    import com.example.ecommerce.domain.order.OrderId;
+    
+    public class PaidOrderCannotBeCancelledException extends DomainException {
+    
+        public PaidOrderCannotBeCancelledException(OrderId orderId) {
+            super("Paid order cannot be cancelled: " + orderId);
+        }
+    }
+============================================================
 FILE: ./src/main/java/com/example/ecommerce/domain/exception/CartItemNotFoundException.java
 LAST_MODIFIED: 2026-01-01 09:23:54
 ============================================================
@@ -1262,7 +1368,7 @@ LAST_MODIFIED: 2026-01-01 09:23:54
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/domain/exception/OrderAlreadyPaidException.java
-LAST_MODIFIED: 2026-01-03 15:33:35
+LAST_MODIFIED: 2026-01-05 06:34:02
 ============================================================
 
     package com.example.ecommerce.domain.exception;
@@ -1464,7 +1570,7 @@ LAST_MODIFIED: 2026-01-04 07:24:48
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/application/order/PayOrderUseCase.java
-LAST_MODIFIED: 2026-01-04 08:37:31
+LAST_MODIFIED: 2026-01-05 07:33:06
 ============================================================
 
     package com.example.ecommerce.application.order;
@@ -1506,12 +1612,15 @@ LAST_MODIFIED: 2026-01-04 08:37:31
                 consumer.accept(event);
             }
     
+            for (DomainEvent event : aggregate.pullDomainEvents()) {
+                publisher.publish(event);
+            }
         }
     }
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/application/order/PlaceOrderFromCartUseCase.java
-LAST_MODIFIED: 2026-01-05 05:42:14
+LAST_MODIFIED: 2026-01-05 07:32:39
 ============================================================
 
     package com.example.ecommerce.application.order;
@@ -1578,6 +1687,10 @@ LAST_MODIFIED: 2026-01-05 05:42:14
     
             for (DomainEvent event : order.pullDomainEvents()) {
                 consumer.accept(event);
+            }
+    
+            for (DomainEvent event : aggregate.pullDomainEvents()) {
+                publisher.publish(event);
             }
     
             cart.clear();
@@ -1698,7 +1811,7 @@ LAST_MODIFIED: 2026-01-02 16:21:33
 
 ============================================================
 FILE: ./src/main/java/com/example/ecommerce/application/cart/CartView.java
-LAST_MODIFIED: 2026-01-02 16:34:23
+LAST_MODIFIED: 2026-01-05 06:47:43
 ============================================================
 
     package com.example.ecommerce.application.cart;

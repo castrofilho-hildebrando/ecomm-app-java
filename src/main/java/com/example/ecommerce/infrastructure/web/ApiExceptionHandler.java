@@ -32,12 +32,4 @@ public class ApiExceptionHandler {
     public ErrorResponse handleDomainError(DomainException ex) {
         return new ErrorResponse(ex.getMessage());
     }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleIllegalArgument(
-            IllegalArgumentException ex
-    ) {
-        return new ErrorResponse(ex.getMessage());
-    }
 }

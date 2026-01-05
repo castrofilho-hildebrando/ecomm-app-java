@@ -14,4 +14,24 @@ public class CartConfig {
     ) {
         return new AddItemToCartUseCase(cartRepository);
     }
+
+    @Bean
+    RemoveItemFromCartUseCase removeItemFromCartUseCase(CartRepository repo) {
+        return new RemoveItemFromCartUseCase(repo);
+    }
+
+    @Bean
+    UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase(CartRepository repo) {
+        return new UpdateCartItemQuantityUseCase(repo);
+    }
+
+    @Bean
+    ClearCartUseCase clearCartUseCase(CartRepository repo) {
+        return new ClearCartUseCase(repo);
+    }
+
+    @Bean
+    GetCartUseCase getCartUseCase(CartRepository repo) {
+        return new GetCartUseCase(repo);
+    }
 }
