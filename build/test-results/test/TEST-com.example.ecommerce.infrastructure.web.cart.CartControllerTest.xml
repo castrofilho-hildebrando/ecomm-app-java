@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.ecommerce.infrastructure.web.cart.CartControllerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-01-04T11:56:53.080Z" hostname="unitytech-Office" time="0.06">
+  <properties/>
+  <testcase name="shouldUpdateItemQuantity()" classname="com.example.ecommerce.infrastructure.web.cart.CartControllerTest" time="0.034"/>
+  <testcase name="shouldReturnEmptyCartWhenCartExistsButHasNoItems()" classname="com.example.ecommerce.infrastructure.web.cart.CartControllerTest" time="0.003"/>
+  <testcase name="shouldAddItemToCart()" classname="com.example.ecommerce.infrastructure.web.cart.CartControllerTest" time="0.005"/>
+  <testcase name="shouldReturn404WhenUpdatingNonExistingCart()" classname="com.example.ecommerce.infrastructure.web.cart.CartControllerTest" time="0.005"/>
+  <testcase name="shouldRemoveItemFromCart()" classname="com.example.ecommerce.infrastructure.web.cart.CartControllerTest" time="0.006"/>
+  <testcase name="shouldClearCart()" classname="com.example.ecommerce.infrastructure.web.cart.CartControllerTest" time="0.006"/>
+  <system-out><![CDATA[2026-01-04T08:56:52.915-03:00  INFO 50171 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.ecommerce.infrastructure.web.cart.CartControllerTest]: CartControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-01-04T08:56:52.931-03:00  INFO 50171 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.ecommerce.EcommerceApplication for test class com.example.ecommerce.infrastructure.web.cart.CartControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-01-04T08:56:52.947-03:00  INFO 50171 --- [    Test worker] c.e.e.i.web.cart.CartControllerTest      : Starting CartControllerTest using Java 21.0.9 with PID 50171 (started by unitytech in /home/unitytech/UnityTech/Apps/ecomm-app-java)
+2026-01-04T08:56:52.947-03:00  INFO 50171 --- [    Test worker] c.e.e.i.web.cart.CartControllerTest      : No active profile set, falling back to 1 default profile: "default"
+2026-01-04T08:56:53.074-03:00  INFO 50171 --- [    Test worker] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-01-04T08:56:53.074-03:00  INFO 50171 --- [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-01-04T08:56:53.075-03:00  INFO 50171 --- [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-01-04T08:56:53.078-03:00  INFO 50171 --- [    Test worker] c.e.e.i.web.cart.CartControllerTest      : Started CartControllerTest in 0.145 seconds (process running for 2.208)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

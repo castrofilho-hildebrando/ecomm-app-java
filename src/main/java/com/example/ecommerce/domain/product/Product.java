@@ -1,5 +1,9 @@
 package com.example.ecommerce.domain.product;
 
+import com.example.ecommerce.domain.exception.ProductIdIsRequiredException;
+import com.example.ecommerce.domain.exception.ProductNameIsRequiredException;
+import com.example.ecommerce.domain.exception.ProductPriceMustBePositiveException;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -17,13 +21,13 @@ public final class Product {
             boolean active
     ) {
         if (id == null) {
-            throw new IllegalArgumentException("Product id is required");
+            throw new ProductIdIsRequiredException();
         }
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Product name is required");
+            throw new ProductNameIsRequiredException();
         }
         if (price == null || price.signum() <= 0) {
-            throw new IllegalArgumentException("Product price must be positive");
+            throw new ProductPriceMustBePositiveException();
         }
 
         this.id = id;

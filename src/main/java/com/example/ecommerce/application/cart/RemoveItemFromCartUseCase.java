@@ -1,6 +1,11 @@
 package com.example.ecommerce.application.cart;
 
-import com.example.ecommerce.domain.cart.*;
+import com.example.ecommerce.domain.cart.Cart;
+import com.example.ecommerce.domain.cart.CartId;
+import com.example.ecommerce.domain.cart.CartRepository;
+import com.example.ecommerce.domain.cart.ProductId;
+import com.example.ecommerce.domain.exception.CartNotFoundException;
+import com.example.ecommerce.application.security.CurrentUser;
 
 public class RemoveItemFromCartUseCase {
 
@@ -10,14 +15,28 @@ public class RemoveItemFromCartUseCase {
         this.cartRepository = cartRepository;
     }
 
-    public void execute(String cartId, String productId) {
+    public CartView execute(
+            String cartId,
+            CurrentUser currentUser,
+            String productId
+    ) {
         CartId cid = new CartId(cartId);
-        ProductId pid = new ProductId(productId);
+        UserId uid = currentUser.id();
 
         Cart cart = cartRepository.findById(cid)
-                .orElseThrow(() -> new IllegalStateException("Cart not found"));
+                .orElseThrow(() -> new CartNotFoundException(cartId));
+
+        if (cart.isEmpty()) {
+            throw new EmptyCartException(cartId);
+        }
+
+        CartOwnershipPolicy.assertOwner(cart, uid);
+
+        ProductId pid = new ProductId(productId);
 
         cart.removeItem(pid);
         cartRepository.save(cart);
+
+        return CartView.from(cart);
     }
 }

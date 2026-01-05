@@ -1,6 +1,8 @@
 package com.example.ecommerce.infrastructure.persistence.memory.cart;
 
-import com.example.ecommerce.domain.cart.*;
+import com.example.ecommerce.domain.cart.Cart;
+import com.example.ecommerce.domain.cart.CartId;
+import com.example.ecommerce.domain.cart.CartRepository;
 
 import java.util.Map;
 import java.util.Optional;

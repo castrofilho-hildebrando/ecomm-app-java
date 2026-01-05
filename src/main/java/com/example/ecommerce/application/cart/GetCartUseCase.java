@@ -1,6 +1,14 @@
 package com.example.ecommerce.application.cart;
 
-import com.example.ecommerce.domain.cart.*;
+import com.example.ecommerce.domain.cart.Cart;
+import com.example.ecommerce.domain.cart.CartId;
+import com.example.ecommerce.domain.cart.CartRepository;
+
+import com.example.ecommerce.domain.user.UserId;
+import com.example.ecommerce.application.security.CurrentUser;
+
+import com.example.ecommerce.application.cart.CartView;
+import com.example.ecommerce.application.cart.CartItemView;
 
 import java.util.List;
 
@@ -12,12 +20,15 @@ public class GetCartUseCase {
         this.cartRepository = cartRepository;
     }
 
-    public CartView execute(String cartId) {
+    public CartView execute(String cartId, CurrentUser currentUser) {
 
         CartId cid = new CartId(cartId);
+        UserId uid = currentUser.id();
 
         Cart cart = cartRepository.findById(cid)
-                .orElse(new Cart(cid));
+                .orElseThrow(() -> new CartNotFoundException(cartId));
+
+        CartOwnershipPolicy.assertOwner(cart, uid);
 
         List<CartItemView> items = cart.getItems().stream()
                 .map(item -> new CartItemView(

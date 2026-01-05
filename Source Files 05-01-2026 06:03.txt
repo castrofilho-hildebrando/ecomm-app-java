@@ -1,0 +1,2781 @@
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/order/OrderController.java
+LAST_MODIFIED: 2026-01-04 08:34:18
+============================================================
+
+    package com.example.ecommerce.infrastructure.web.order;
+    
+    import com.example.ecommerce.application.order.PayOrderUseCase;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.annotation.*;
+    import com.example.ecommerce.application.order.GetOrderUseCase;
+    import com.example.ecommerce.application.order.OrderView;
+    
+    @RestController
+    @RequestMapping("/orders")
+    public class OrderController {
+    
+        private final PayOrderUseCase payOrderUseCase;
+        private final GetOrderUseCase getOrderUseCase;
+    
+        public OrderController(PayOrderUseCase payOrderUseCase, GetOrderUseCase getOrderUseCase) {
+            this.payOrderUseCase = payOrderUseCase;
+            this.getOrderUseCase = getOrderUseCase;
+        }
+    
+        @PostMapping("/{orderId}/pay")
+        @ResponseStatus(HttpStatus.NO_CONTENT)
+        public void pay(@PathVariable String orderId) {
+            payOrderUseCase.execute(orderId);
+        }
+    
+        @GetMapping("/{orderId}")
+        public OrderView get(@PathVariable String orderId) {
+            return getOrderUseCase.execute(orderId);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/ApiExceptionHandler.java
+LAST_MODIFIED: 2026-01-03 15:36:21
+============================================================
+
+    package com.example.ecommerce.infrastructure.web;
+    
+    import com.example.ecommerce.domain.exception.*;
+    
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.annotation.*;
+    
+    record ErrorResponse(String message) {}
+    
+    @RestControllerAdvice
+    public class ApiExceptionHandler {
+    
+        @ExceptionHandler({
+                CartNotFoundException.class,
+                OrderNotFoundException.class
+        })
+        @ResponseStatus(HttpStatus.NOT_FOUND)
+        public ErrorResponse handleNotFound(DomainException ex) {
+            return new ErrorResponse(ex.getMessage());
+        }
+    
+        @ExceptionHandler({
+                OrderAlreadyPaidException.class
+        })
+        @ResponseStatus(HttpStatus.CONFLICT)
+        public ErrorResponse handleConflict(DomainException ex) {
+            return new ErrorResponse(ex.getMessage());
+        }
+    
+        @ExceptionHandler(DomainException.class)
+        @ResponseStatus(HttpStatus.BAD_REQUEST)
+        public ErrorResponse handleDomainError(DomainException ex) {
+            return new ErrorResponse(ex.getMessage());
+        }
+    
+        @ExceptionHandler(IllegalArgumentException.class)
+        @ResponseStatus(HttpStatus.BAD_REQUEST)
+        public ErrorResponse handleIllegalArgument(
+                IllegalArgumentException ex
+        ) {
+            return new ErrorResponse(ex.getMessage());
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/cart/CartController.java
+LAST_MODIFIED: 2026-01-05 05:52:50
+============================================================
+
+    package com.example.ecommerce.infrastructure.web.cart;
+    
+    import com.example.ecommerce.application.cart.*;
+    import com.example.ecommerce.application.security.CurrentUser;
+    import org.springframework.web.bind.annotation.*;
+    import org.springframework.http.HttpStatus;
+    
+    import java.util.List;
+    
+    @RestController
+    @RequestMapping("/carts")
+    public class CartController {
+    
+        private final AddItemToCartUseCase addItemToCartUseCase;
+        private final RemoveItemFromCartUseCase removeItemFromCartUseCase;
+        private final UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase;
+        private final ClearCartUseCase clearCartUseCase;
+        private final GetCartUseCase getCartUseCase;
+    
+        public CartController(
+                AddItemToCartUseCase addItemToCartUseCase,
+                RemoveItemFromCartUseCase removeItemFromCartUseCase,
+                UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase,
+                ClearCartUseCase clearCartUseCase,
+                GetCartUseCase getCartUseCase
+        ) {
+            this.addItemToCartUseCase = addItemToCartUseCase;
+            this.removeItemFromCartUseCase = removeItemFromCartUseCase;
+            this.updateCartItemQuantityUseCase = updateCartItemQuantityUseCase;
+            this.clearCartUseCase = clearCartUseCase;
+            this.getCartUseCase = getCartUseCase;
+        }
+    
+        @PostMapping("/{cartId}/items")
+        public CartResponse addItem(
+                @PathVariable String cartId,
+                @PathVariable String userId,
+                @RequestBody AddItemRequest request
+        ) {
+            CurrentUser currentUser = new FixedCurrentUser("user-1");
+            CartView view = addItemToCartUseCase.execute(
+                    cartId,
+                    currentUser,
+                    request.userId,
+                    request.productId(),
+                    request.quantity()
+            );
+    
+            return CartResponse.from(view);
+        }
+    
+        @PutMapping("/{cartId}/items/{productId}")
+        public CartResponse updateItemQuantity(
+                @PathVariable String cartId,
+                @PathVariable String productId,
+                @RequestBody UpdateItemQuantityRequest request
+        ) {
+            CurrentUser currentUser = new FixedCurrentUser("user-1");
+            CartView view = updateCartItemQuantityUseCase.execute(
+                    cartId,
+                    currentUser,
+                    productId,
+                    request.quantity()
+            );
+    
+            return CartResponse.from(view);
+        }
+    
+        @DeleteMapping("/{cartId}/items/{productId}")
+        public CartResponse removeItem(
+                @PathVariable String cartId,
+                @PathVariable String productId
+        ) {
+            CurrentUser currentUser = new FixedCurrentUser("user-1");
+            CartView view = removeItemFromCartUseCase.execute(
+                    cartId,
+                    currentUser,
+                    productId
+            );
+            return CartResponse.from(view);
+        }
+    
+        @DeleteMapping("/{cartId}")
+        @ResponseStatus(HttpStatus.NO_CONTENT)
+        public void clearCart(@PathVariable String cartId) {
+            CurrentUser currentUser = new FixedCurrentUser("user-1");
+            clearCartUseCase.execute(cartId, currentUser);
+        }
+    
+        @GetMapping("/{cartId}")
+        public CartResponse getCart(@PathVariable String cartId) {
+            CurrentUser currentUser = new FixedCurrentUser("user-1");
+            CartView cartView = getCartUseCase.execute(cartId, currentUser);
+    
+            List<CartItemResponse> items = cartView.items().stream()
+                    .map(item -> new CartItemResponse(
+                            item.productId(),
+                            item.quantity()
+                    ))
+                    .toList();
+    
+            return new CartResponse(cartView.cartId(), items);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/cart/AddItemRequest.java
+LAST_MODIFIED: 2026-01-02 17:03:47
+============================================================
+
+    package com.example.ecommerce.infrastructure.web.cart;
+    
+    public record AddItemRequest(
+            String productId,
+            int quantity
+    ) {
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/cart/CartResponse.java
+LAST_MODIFIED: 2026-01-02 17:16:21
+============================================================
+
+    package com.example.ecommerce.infrastructure.web.cart;
+    
+    import com.example.ecommerce.application.cart.CartView;
+    
+    import java.util.List;
+    
+    public record CartResponse(
+            String cartId,
+            List<CartItemResponse> items
+    ) {
+    
+        public static CartResponse from(CartView view) {
+            return new CartResponse(
+                    view.cartId(),
+                    view.items().stream()
+                            .map(item -> new CartItemResponse(
+                                    item.productId(),
+                                    item.quantity()
+                            ))
+                            .toList()
+            );
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/cart/CartItemResponse.java
+LAST_MODIFIED: 2026-01-02 17:04:03
+============================================================
+
+    package com.example.ecommerce.infrastructure.web.cart;
+    
+    public record CartItemResponse(
+            String productId,
+            int quantity
+    ) {
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/web/cart/UpdateItemQuantityRequest.java
+LAST_MODIFIED: 2026-01-02 17:04:17
+============================================================
+
+    package com.example.ecommerce.infrastructure.web.cart;
+    
+    public record UpdateItemQuantityRequest(
+            int quantity
+    ) {
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order/OrderMapper.java
+LAST_MODIFIED: 2026-01-03 07:36:36
+============================================================
+
+    package com.example.ecommerce.infrastructure.mapper;
+    
+    import com.example.ecommerce.domain.order.Order;
+    import com.example.ecommerce.domain.order.OrderId;
+    import com.example.ecommerce.domain.order.OrderItem;
+    import com.example.ecommerce.domain.order.OrderStatus;
+    import com.example.ecommerce.domain.cart.ProductId;
+    import com.example.ecommerce.infrastructure.persistence.mongo.order.OrderDocument;
+    import com.example.ecommerce.infrastructure.persistence.mongo.order.OrderItemDocument;
+    
+    import java.util.stream.Collectors;
+    
+    public class OrderMapper {
+    
+        public static OrderDocument toDocument(Order order) {
+            OrderDocument doc = new OrderDocument();
+            doc.setId(order.getId().value());
+    
+            doc.setItems(
+                    order.getItems().stream()
+                            .map(i -> new OrderItemDocument(
+                                    i.getProductId().value(),
+                                    i.getQuantity()
+                            ))
+                            .collect(Collectors.toList())
+            );
+    
+            doc.setStatus(order.getStatus().name());
+    
+            return doc;
+        }
+    
+        public static Order toDomain(OrderDocument doc) {
+            OrderStatus status = OrderStatus.valueOf(doc.getStatus());
+    
+            return Order.rehydrate(
+                    new OrderId(doc.getId()),
+                    doc.getItems().stream()
+                            .map(i -> new OrderItem(
+                                    new ProductId(i.getProductId()),
+                                    i.getQuantity()
+                            ))
+                            .toList(),
+                    status
+            );
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order/OrderDocument.java
+LAST_MODIFIED: 2026-01-03 09:33:01
+============================================================
+
+    package com.example.ecommerce.infrastructure.persistence.mongo.order;
+    
+    import org.springframework.data.annotation.Id;
+    import org.springframework.data.mongodb.core.mapping.Document;
+    
+    import java.util.List;
+    
+    @Document(collection = "orders")
+    public class OrderDocument {
+    
+        @Id
+        private String id;
+    
+        private String status;
+    
+        private List<OrderItemDocument> items;
+    
+        public String getId() {
+            return id;
+        }
+    
+        public void setId(String id) {
+            this.id = id;
+        }
+    
+        public String getStatus() {
+            return status;
+        }
+    
+        public void setStatus(String status) {
+            this.status = status;
+        }
+    
+        public List<OrderItemDocument> getItems() {
+            return items;
+        }
+    
+        public void setItems(List<OrderItemDocument> items) {
+            this.items = items;
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order/MongoOrderRepository.java
+LAST_MODIFIED: 2026-01-02 13:42:38
+============================================================
+
+    package com.example.ecommerce.infrastructure.persistence.mongo.order;
+    
+    import com.example.ecommerce.domain.order.Order;
+    import com.example.ecommerce.domain.order.OrderId;
+    import com.example.ecommerce.domain.order.OrderRepository;
+    import com.example.ecommerce.infrastructure.mapper.OrderMapper;
+    import org.springframework.stereotype.Repository;
+    
+    import java.util.Optional;
+    
+    @Repository
+    public class MongoOrderRepository implements OrderRepository {
+    
+        private final SpringDataOrderRepository springDataOrderRepository;
+    
+        public MongoOrderRepository(SpringDataOrderRepository springDataOrderRepository) {
+            this.springDataOrderRepository = springDataOrderRepository;
+        }
+    
+        @Override
+        public Optional<Order> findById(OrderId id) {
+            return springDataOrderRepository.findById(id.value())
+                    .map(OrderMapper::toDomain);
+        }
+    
+        @Override
+        public void save(Order order) {
+            springDataOrderRepository.save(OrderMapper.toDocument(order));
+        }
+    
+        @Override
+        public void delete(OrderId id) {
+            springDataOrderRepository.deleteById(id.value());
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order/SpringDataOrderRepository.java
+LAST_MODIFIED: 2026-01-02 13:41:51
+============================================================
+
+    package com.example.ecommerce.infrastructure.persistence.mongo.order;
+    
+    import org.springframework.data.mongodb.repository.MongoRepository;
+    
+    public interface SpringDataOrderRepository extends MongoRepository<OrderDocument, String> {
+        // Spring Data will generate queries automatically
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/order/OrderItemDocument.java
+LAST_MODIFIED: 2026-01-02 15:24:10
+============================================================
+
+    package com.example.ecommerce.infrastructure.persistence.mongo.order;
+    
+    public class OrderItemDocument {
+    
+        private String productId;
+        private int quantity;
+    
+        public OrderItemDocument(String productId, int quantity) {
+            this.productId = productId;
+            this.quantity = quantity;
+        }
+    
+        public String getProductId() {
+            return productId;
+        }
+    
+        public int getQuantity() {
+            return quantity;
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/CartMapper.java
+LAST_MODIFIED: 2026-01-04 19:44:05
+============================================================
+
+    package com.example.ecommerce.infrastructure.mapper;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    import com.example.ecommerce.domain.cart.CartId;
+    import com.example.ecommerce.domain.cart.ProductId;
+    import com.example.ecommerce.infrastructure.persistence.mongo.cart.CartDocument;
+    
+    import java.util.Map;
+    import java.util.stream.Collectors;
+    
+    public class CartMapper {
+    
+        public static Cart toDomain(CartDocument doc) {
+            Map<ProductId, Integer> items = doc.getItems().entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> new ProductId(e.getKey()),
+                            Map.Entry::getValue
+                    ));
+    
+            return Cart.rehydrate(
+                    new CartId(doc.getId()),
+                    new UserId(doc.getOwnerId()),
+                    items
+            );
+        }
+    
+        public static CartDocument toDocument(Cart cart) {
+            CartDocument doc = new CartDocument();
+            doc.setId(cart.getId().value());
+            doc.setOwnerId(cart.getOwnerId().value());
+    
+            cart.getItems().forEach(item ->
+                    doc.getItems().put(
+                            item.getProductId().value(),
+                            item.getQuantity()
+                    )
+            );
+            return doc;
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/MongoCartRepository.java
+LAST_MODIFIED: 2026-01-02 14:28:40
+============================================================
+
+    package com.example.ecommerce.infrastructure.persistence.mongo.cart;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    import com.example.ecommerce.domain.cart.CartId;
+    import com.example.ecommerce.domain.cart.CartRepository;
+    import com.example.ecommerce.infrastructure.mapper.CartMapper;
+    
+    import java.util.Optional;
+    import org.springframework.stereotype.Repository;
+    
+    @Repository
+    public class MongoCartRepository implements CartRepository {
+    
+        private final SpringDataCartRepository repository;
+    
+        public MongoCartRepository(SpringDataCartRepository repository) {
+            this.repository = repository;
+        }
+        
+        @Override
+        public Optional<Cart> findById(CartId id) {
+            return repository.findById(id.value())
+                    .map(CartMapper::toDomain);
+        }
+    
+        @Override
+        public void save(Cart cart) {
+            repository.save(CartMapper.toDocument(cart));
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/CartDocument.java
+LAST_MODIFIED: 2026-01-04 20:04:38
+============================================================
+
+    package com.example.ecommerce.infrastructure.persistence.mongo.cart;
+    
+    import org.springframework.data.annotation.Id;
+    import org.springframework.data.mongodb.core.mapping.Document;
+    
+    import java.util.HashMap;
+    import java.util.Map;
+    
+    @Document(collection = "carts")
+    public class CartDocument {
+    
+        @Id
+        private String id;
+    
+        private String ownerId;
+    
+        private Map<String, Integer> items = new HashMap<>();
+    
+        public String getId() {
+            return id;
+        }
+    
+        public void setId(String id) {
+            this.id = id;
+        }
+    
+        public String getOwner() {
+            return ownerId;
+        }
+    
+        public void setOwner(String ownerId) {
+            this.ownerId = ownerId;
+        }
+    
+        public Map<String, Integer> getItems() {
+            return items;
+        }
+    
+        public void setItems(Map<String, Integer> items) {
+            this.items = items;
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/mongo/cart/SpringDataCartRepository.java
+LAST_MODIFIED: 2026-01-02 12:43:00
+============================================================
+
+    package com.example.ecommerce.infrastructure.persistence.mongo.cart;
+    
+    import com.example.ecommerce.infrastructure.persistence.mongo.cart.CartDocument;
+    import org.springframework.data.mongodb.repository.MongoRepository;
+    
+    public interface SpringDataCartRepository
+            extends MongoRepository<CartDocument, String> {
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/memory/order/InMemoryOrderRepository.java
+LAST_MODIFIED: 2026-01-03 15:55:44
+============================================================
+
+    package com.example.ecommerce.infrastructure.persistence.memory.order;
+    
+    import com.example.ecommerce.domain.order.Order;
+    import com.example.ecommerce.domain.order.OrderId;
+    import com.example.ecommerce.domain.order.OrderRepository;
+    import org.springframework.stereotype.Repository;
+    
+    import java.util.Map;
+    import java.util.Optional;
+    import java.util.concurrent.ConcurrentHashMap;
+    
+    @Repository
+    public class InMemoryOrderRepository implements OrderRepository {
+    
+        private final Map<String, Order> storage = new ConcurrentHashMap<>();
+    
+        @Override
+        public Optional<Order> findById(OrderId id) {
+            return Optional.ofNullable(storage.get(id.value()));
+        }
+    
+        @Override
+        public void save(Order order) {
+            storage.put(order.getId().value(), order);
+        }
+    
+        @Override
+        public void delete(OrderId id) {
+            storage.remove(id.value());
+        }
+    
+        // test/support convenience
+        public void clear() {
+            storage.clear();
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/persistence/memory/cart/InMemoryCartRepository.java
+LAST_MODIFIED: 2026-01-02 12:54:55
+============================================================
+
+    package com.example.ecommerce.infrastructure.persistence.memory.cart;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    import com.example.ecommerce.domain.cart.CartId;
+    import com.example.ecommerce.domain.cart.CartRepository;
+    
+    import java.util.Map;
+    import java.util.Optional;
+    import java.util.concurrent.ConcurrentHashMap;
+    
+    public class InMemoryCartRepository implements CartRepository {
+    
+        private final Map<String, Cart> storage = new ConcurrentHashMap<>();
+    
+        @Override
+        public Optional<Cart> findById(CartId id) {
+            return Optional.ofNullable(storage.get(id.value()));
+        }
+    
+        @Override
+        public void save(Cart cart) {
+            storage.put(cart.getId().value(), cart);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/config/CartConfig.java
+LAST_MODIFIED: 2025-12-31 12:45:53
+============================================================
+
+    package com.example.ecommerce.infrastructure.config;
+    
+    import com.example.ecommerce.application.cart.AddItemToCartUseCase;
+    import com.example.ecommerce.domain.cart.CartRepository;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    
+    @Configuration
+    public class CartConfig {
+    
+        @Bean
+        public AddItemToCartUseCase addItemToCartUseCase(
+                CartRepository cartRepository
+        ) {
+            return new AddItemToCartUseCase(cartRepository);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/config/OrderConfig.java
+LAST_MODIFIED: 2026-01-04 08:35:14
+============================================================
+
+    package com.example.ecommerce.infrastructure.config;
+    
+    import com.example.ecommerce.application.event.DomainEventPublisher;
+    import com.example.ecommerce.application.order.PayOrderUseCase;
+    import com.example.ecommerce.domain.order.OrderRepository;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    import com.example.ecommerce.application.order.GetOrderUseCase;
+    
+    @Configuration
+    public class OrderConfig {
+    
+        @Bean
+        public PayOrderUseCase payOrderUseCase(
+                OrderRepository orderRepository,
+                DomainEventPublisher publisher
+        ) {
+            return new PayOrderUseCase(orderRepository, publisher);
+        }
+    
+        @Bean
+        public GetOrderUseCase getOrderUseCase(
+                OrderRepository orderRepository
+        ) {
+            return new GetOrderUseCase(orderRepository);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/infrastructure/event/LoggingDomainEventPublisher.java
+LAST_MODIFIED: 2026-01-03 06:33:40
+============================================================
+
+    package com.example.ecommerce.infrastructure.event;
+    
+    import com.example.ecommerce.application.event.DomainEventPublisher;
+    import com.example.ecommerce.domain.event.DomainEvent;
+    
+    public class LoggingDomainEventPublisher
+            implements DomainEventPublisher {
+    
+        @Override
+        public void publish(DomainEvent event) {
+            System.out.println(
+                    "Domain event published: " + event
+            );
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/order/OrderId.java
+LAST_MODIFIED: 2026-01-02 16:25:06
+============================================================
+
+    package com.example.ecommerce.domain.order;
+    
+    import java.util.Objects;
+    import java.util.UUID;
+    
+    public record OrderId(String value) {
+    
+        public OrderId {
+            Objects.requireNonNull(value);
+        }
+    
+        public static OrderId newId() {
+            return new OrderId(UUID.randomUUID().toString());
+        }
+    }
+    
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/order/Order.java
+LAST_MODIFIED: 2026-01-03 15:33:45
+============================================================
+
+    package com.example.ecommerce.domain.order;
+    
+    import com.example.ecommerce.domain.event.DomainEvent;
+    import com.example.ecommerce.domain.order.event.OrderCreatedEvent;
+    import com.example.ecommerce.domain.order.event.OrderPaidEvent;
+    import com.example.ecommerce.domain.exception.OrderAlreadyPaidException;
+    
+    import java.util.List;
+    import java.util.ArrayList;
+    import java.util.Objects;
+    
+    public class Order {
+    
+        private final OrderId id;
+        private final List<OrderItem> items;
+        private final List<DomainEvent> domainEvents = new ArrayList<>();
+        private OrderStatus status;
+    
+        public Order(OrderId id, List<OrderItem> items) {
+            this.id = Objects.requireNonNull(id);
+            this.items = List.copyOf(items);
+            this.status = OrderStatus.CREATED;
+    
+             domainEvents.add(new OrderCreatedEvent(id));
+        }
+    
+        private Order(
+            OrderId id,
+            List<OrderItem> items,
+            OrderStatus status
+        ) {
+            this.id = id;
+            this.items = List.copyOf(items);
+            this.status = status;
+        }
+    
+        public OrderId getId() {
+            return id;
+        }
+    
+        public List<OrderItem> getItems() {
+            return items;
+        }
+    
+        public OrderStatus getStatus() {
+            return status;
+        }
+    
+        public void markAsPaid() {
+            if (status != OrderStatus.CREATED) {
+                throw new OrderAlreadyPaidException(id);
+            }
+            this.status = OrderStatus.PAID;
+            domainEvents.add(new OrderPaidEvent(id));
+        }
+    
+        public void cancel() {
+            if (status == OrderStatus.PAID) {
+                throw new IllegalStateException(
+                        "Paid order cannot be cancelled"
+                );
+            }
+            this.status = OrderStatus.CANCELLED;
+        }
+    
+        public List<DomainEvent> pullDomainEvents() {
+            List<DomainEvent> events = List.copyOf(domainEvents);
+            domainEvents.clear();
+            return events;
+        }
+    
+        public static Order rehydrate(
+            OrderId id,
+            List<OrderItem> items,
+            OrderStatus status
+        ) {
+            return new Order(id, items, status);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/order/OrderRepository.java
+LAST_MODIFIED: 2026-01-02 14:24:09
+============================================================
+
+    package com.example.ecommerce.domain.order;
+    
+    import java.util.Optional;
+    
+    public interface OrderRepository {
+    
+        Optional<Order> findById(OrderId id);
+    
+        void save(Order order);
+    
+        void delete(OrderId id);
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/order/OrderItem.java
+LAST_MODIFIED: 2026-01-02 14:15:40
+============================================================
+
+    package com.example.ecommerce.domain.order;
+    
+    import com.example.ecommerce.domain.cart.ProductId;
+    
+    public class OrderItem {
+    
+        private final ProductId productId;
+        private final int quantity;
+    
+        public OrderItem(ProductId productId, int quantity) {
+            this.productId = productId;
+            this.quantity = quantity;
+        }
+    
+        public ProductId getProductId() {
+            return productId;
+        }
+    
+        public int getQuantity() {
+            return quantity;
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/order/OrderStatus.java
+LAST_MODIFIED: 2026-01-02 17:51:48
+============================================================
+
+    package com.example.ecommerce.domain.order;
+    
+    public enum OrderStatus {
+        CREATED,
+        PAID,
+        CANCELLED
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/order/event/OrderPaidEvent.java
+LAST_MODIFIED: 2026-01-03 06:14:31
+============================================================
+
+    package com.example.ecommerce.domain.order.event;
+    
+    import com.example.ecommerce.domain.event.DomainEvent;
+    import com.example.ecommerce.domain.order.OrderId;
+    
+    import java.time.Instant;
+    
+    public record OrderPaidEvent(
+            OrderId orderId,
+            Instant occurredAt
+    ) implements DomainEvent {
+    
+        public OrderPaidEvent(OrderId orderId) {
+            this(orderId, Instant.now());
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/order/event/OrderCreatedEvent.java
+LAST_MODIFIED: 2026-01-03 06:14:03
+============================================================
+
+    package com.example.ecommerce.domain.order.event;
+    
+    import com.example.ecommerce.domain.event.DomainEvent;
+    import com.example.ecommerce.domain.order.OrderId;
+    
+    import java.time.Instant;
+    
+    public record OrderCreatedEvent(
+            OrderId orderId,
+            Instant occurredAt
+    ) implements DomainEvent {
+    
+        public OrderCreatedEvent(OrderId orderId) {
+            this(orderId, Instant.now());
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/product/ProductRepository.java
+LAST_MODIFIED: 2025-12-30 06:54:51
+============================================================
+
+    package com.example.ecommerce.domain.product;
+    
+    import java.util.Optional;
+    import java.util.UUID;
+    
+    public interface ProductRepository {
+    
+        Optional<Product> findById(UUID productId);
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/product/Product.java
+LAST_MODIFIED: 2026-01-02 06:54:18
+============================================================
+
+    package com.example.ecommerce.domain.product;
+    
+    import com.example.ecommerce.domain.exception.ProductIdIsRequiredException;
+    import com.example.ecommerce.domain.exception.ProductNameIsRequiredException;
+    import com.example.ecommerce.domain.exception.ProductPriceMustBePositiveException;
+    
+    import java.math.BigDecimal;
+    import java.util.UUID;
+    
+    public final class Product {
+    
+        private final UUID id;
+        private final String name;
+        private final BigDecimal price;
+        private final boolean active;
+    
+        public Product(
+                UUID id,
+                String name,
+                BigDecimal price,
+                boolean active
+        ) {
+            if (id == null) {
+                throw new ProductIdIsRequiredException();
+            }
+            if (name == null || name.isBlank()) {
+                throw new ProductNameIsRequiredException();
+            }
+            if (price == null || price.signum() <= 0) {
+                throw new ProductPriceMustBePositiveException();
+            }
+    
+            this.id = id;
+            this.name = name;
+            this.price = price;
+            this.active = active;
+        }
+    
+        public UUID id() {
+            return id;
+        }
+    
+        public String name() {
+            return name;
+        }
+    
+        public BigDecimal price() {
+            return price;
+        }
+    
+        public boolean isActive() {
+            return active;
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/cart/ProductId.java
+LAST_MODIFIED: 2025-12-31 16:42:31
+============================================================
+
+    package com.example.ecommerce.domain.cart;
+    
+    import java.util.Objects;
+    
+    public record ProductId(String value) {
+        public ProductId {
+            Objects.requireNonNull(value);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/cart/CartId.java
+LAST_MODIFIED: 2025-12-31 16:41:58
+============================================================
+
+    package com.example.ecommerce.domain.cart;
+    
+    import java.util.Objects;
+    
+    public record CartId(String value) {
+        public CartId {
+            Objects.requireNonNull(value);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/cart/CartRepository.java
+LAST_MODIFIED: 2025-12-31 16:54:56
+============================================================
+
+    package com.example.ecommerce.domain.cart;
+    
+    import java.util.Optional;
+    
+    public interface CartRepository {
+    
+        Optional<Cart> findById(CartId id);
+    
+        void save(Cart cart);
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/cart/CartItem.java
+LAST_MODIFIED: 2025-12-31 17:35:45
+============================================================
+
+    package com.example.ecommerce.domain.cart;
+    
+    public class CartItem {
+    
+        private final ProductId productId;
+        private final int quantity;
+    
+        public CartItem(ProductId productId, int quantity) {
+            this.productId = productId;
+            this.quantity = quantity;
+        }
+    
+        public ProductId getProductId() {
+            return productId;
+        }
+    
+        public int getQuantity() {
+            return quantity;
+        }
+    
+        CartItem increase(CartItem other) {
+            return new CartItem(productId, this.quantity + other.quantity);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/cart/Cart.java
+LAST_MODIFIED: 2026-01-04 11:49:19
+============================================================
+
+    package com.example.ecommerce.domain.cart;
+    
+    import com.example.ecommerce.domain.user.UserId;
+    import com.example.ecommerce.domain.exception.InvalidQuantityException;
+    import com.example.ecommerce.domain.exception.CartItemNotFoundException;
+    
+    import java.util.*;
+    
+    public class Cart {
+    
+        private final CartId id;
+        private final UserId ownerId;
+        private final Map<ProductId, CartItem> items;
+    
+        public Cart(CartId id, UserId ownerId) {
+            this(id, ownerId, new HashMap<>());
+        }
+    
+        private Cart(
+                CartId id,
+                UserId ownerId,
+                Map<ProductId, CartItem> items
+        ) {
+            this.id = Objects.requireNonNull(id);
+            this.ownerId = Objects.requireNonNull(ownerId);
+            this.items = items;
+        }
+    
+        public CartId getId() {
+            return id;
+        }
+    
+        public UserId getOwnerId() {
+            return ownerId;
+        }
+    
+        public Collection<CartItem> getItems() {
+            return Collections.unmodifiableCollection(items.values());
+        }
+    
+        public void addItem(ProductId productId, int quantity) {
+            if (quantity <= 0) {
+                throw new InvalidQuantityException(quantity);
+            }
+    
+            items.merge(
+                    productId,
+                    new CartItem(productId, quantity),
+                    CartItem::increase
+            );
+        }
+    
+        public void updateItemQuantity(ProductId productId, int quantity) {
+            if (!items.containsKey(productId)) {
+                throw new CartItemNotFoundException(productId.value());
+            }
+    
+            if (quantity <= 0) {
+                items.remove(productId);
+            } else {
+                items.put(productId, new CartItem(productId, quantity));
+            }
+        }
+    
+        public void removeItem(ProductId productId) {
+            if (!items.containsKey(productId)) {
+                throw new CartItemNotFoundException(productId.value());
+            }
+            items.remove(productId);
+        }
+    
+        public void clear() {
+            items.clear();
+        }
+    
+        public boolean isEmpty() {
+            return items.isEmpty();
+        }
+    
+        public static Cart rehydrate(
+                CartId id,
+                UserId ownerId,
+                Map<ProductId, Integer> persistedItems
+        ) {
+            Map<ProductId, CartItem> items = new HashMap<>();
+            persistedItems.forEach(
+                    (pid, qty) -> items.put(pid, new CartItem(pid, qty))
+            );
+            return new Cart(id, ownerId, items);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/event/DomainEvent.java
+LAST_MODIFIED: 2026-01-03 06:08:24
+============================================================
+
+    package com.example.ecommerce.domain.event;
+    
+    import java.time.Instant;
+    
+    public interface DomainEvent {
+        Instant occurredAt();
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/DomainException.java
+LAST_MODIFIED: 2026-01-01 09:22:57
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    public abstract class DomainException extends RuntimeException {
+    
+        protected DomainException(String message) {
+            super(message);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/ProductNameIsRequiredException.java
+LAST_MODIFIED: 2026-01-02 06:52:10
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    public class ProductNameIsRequiredException extends DomainException {
+    
+        public ProductNameIsRequiredException() {
+            super("Product name is required.");
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/OrderNotFoundException.java
+LAST_MODIFIED: 2026-01-03 14:55:18
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    public class OrderNotFoundException extends DomainException {
+    
+        public OrderNotFoundException(String orderId) {
+            super("Order not found: " + orderId);
+        }
+    }
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/CartItemNotFoundException.java
+LAST_MODIFIED: 2026-01-01 09:23:54
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    public class CartItemNotFoundException extends DomainException {
+    
+        public CartItemNotFoundException(String productId) {
+            super("Item not found in cart: " + productId);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/OrderAlreadyPaidException.java
+LAST_MODIFIED: 2026-01-03 15:33:35
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    import com.example.ecommerce.domain.order.OrderId;
+    
+    public class OrderAlreadyPaidException extends DomainException {
+    
+        public OrderAlreadyPaidException(OrderId orderId) {
+            super("Order already paid: " + orderId);
+        }
+    }
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/ProductIdIsRequiredException.java
+LAST_MODIFIED: 2026-01-02 06:50:38
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    public class ProductIdIsRequiredException extends DomainException {
+    
+        public ProductIdIsRequiredException() {
+            super("Product id is required.");
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/CartNotFoundException.java
+LAST_MODIFIED: 2026-01-01 09:23:25
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    public class CartNotFoundException extends DomainException {
+    
+        public CartNotFoundException(String cartId) {
+            super("Cart not found: " + cartId);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/EmptyCartException.java
+LAST_MODIFIED: 2026-01-02 12:59:46
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    public class EmptyCartException extends DomainException {
+    
+        public EmptyCartException(String cartId) {
+            super("Cart is empty: " + cartId);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/ProductPriceMustBePositiveException.java
+LAST_MODIFIED: 2026-01-02 06:53:41
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    public class ProductPriceMustBePositiveException extends DomainException {
+    
+        public ProductPriceMustBePositiveException() {
+            super("Product price must be positive");
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/exception/InvalidQuantityException.java
+LAST_MODIFIED: 2026-01-01 09:24:21
+============================================================
+
+    package com.example.ecommerce.domain.exception;
+    
+    public class InvalidQuantityException extends DomainException {
+    
+        public InvalidQuantityException(int quantity) {
+            super("Invalid quantity: " + quantity);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/user/User.java
+LAST_MODIFIED: 2026-01-04 11:43:45
+============================================================
+
+    package com.example.ecommerce.domain.user;
+    
+    import java.util.Set;
+    import java.util.Objects;
+    
+    public class User {
+    
+        private final UserId id;
+        private final Set<UserRole> roles;
+        private boolean active;
+    
+        public User(UserId id, Set<UserRole> roles) {
+            this.id = Objects.requireNonNull(id);
+            this.roles = Set.copyOf(roles);
+            this.active = true;
+        }
+    
+        public UserId getId() {
+            return id;
+        }
+    
+        public boolean isActive() {
+            return active;
+        }
+    
+        public boolean hasRole(UserRole role) {
+            return roles.contains(role);
+        }
+    
+        public void deactivate() {
+            this.active = false;
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/user/UserId.java
+LAST_MODIFIED: 2026-01-04 11:42:31
+============================================================
+
+    package com.example.ecommerce.domain.user;
+    
+    import java.util.Objects;
+    import java.util.UUID;
+    
+    public record UserId(String value) {
+    
+        public UserId {
+            Objects.requireNonNull(value);
+        }
+    
+        public static UserId newId() {
+            return new UserId(UUID.randomUUID().toString());
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/user/UserRole.java
+LAST_MODIFIED: 2026-01-04 11:43:15
+============================================================
+
+    package com.example.ecommerce.domain.user;
+    
+    public enum UserRole {
+        CLIENT,
+        ADMIN
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/domain/user/UserRepository.java
+LAST_MODIFIED: 2026-01-04 11:44:56
+============================================================
+
+    package com.example.ecommerce.domain.user;
+    
+    import java.util.Optional;
+    
+    public interface UserRepository {
+    
+        Optional<User> findById(UserId id);
+    
+        void save(User user);
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/order/OrderView.java
+LAST_MODIFIED: 2026-01-04 07:25:25
+============================================================
+
+    package com.example.ecommerce.application.order;
+    
+    import java.util.List;
+    
+    public record OrderView(
+            String orderId,
+            String status,
+            List<OrderItemView> items
+    ) {
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/order/OrderItemView.java
+LAST_MODIFIED: 2026-01-04 07:24:48
+============================================================
+
+    package com.example.ecommerce.application.order;
+    
+    public record OrderItemView(
+            String productId,
+            int quantity
+    ) {
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/order/PayOrderUseCase.java
+LAST_MODIFIED: 2026-01-04 08:37:31
+============================================================
+
+    package com.example.ecommerce.application.order;
+    
+    import com.example.ecommerce.application.event.DomainEventPublisher;
+    import com.example.ecommerce.domain.order.Order;
+    import com.example.ecommerce.domain.order.OrderId;
+    import com.example.ecommerce.domain.order.OrderRepository;
+    import com.example.ecommerce.domain.exception.OrderNotFoundException;
+    import com.example.ecommerce.application.event.EventConsumer;
+    import com.example.ecommerce.domain.event.DomainEvent;
+    
+    public class PayOrderUseCase {
+    
+        private final OrderRepository orderRepository;
+        private final DomainEventPublisher eventPublisher;
+    
+        public PayOrderUseCase(
+                OrderRepository orderRepository,
+                DomainEventPublisher eventPublisher
+        ) {
+            this.orderRepository = orderRepository;
+            this.eventPublisher = eventPublisher;
+        }
+    
+        public void execute(String orderId) {
+            OrderId id = new OrderId(orderId);
+    
+            Order order = orderRepository.findById(id)
+                    .orElseThrow(() ->
+                            new OrderNotFoundException(orderId));
+    
+            order.markAsPaid();
+            orderRepository.save(order);
+    
+            EventConsumer consumer = new EventConsumer(eventPublisher);
+    
+            for (DomainEvent event : order.pullDomainEvents()) {
+                consumer.accept(event);
+            }
+    
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/order/PlaceOrderFromCartUseCase.java
+LAST_MODIFIED: 2026-01-05 05:42:14
+============================================================
+
+    package com.example.ecommerce.application.order;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    import com.example.ecommerce.domain.cart.CartId;
+    import com.example.ecommerce.domain.cart.CartRepository;
+    import com.example.ecommerce.domain.user.UserId;
+    import com.example.ecommerce.application.security.CurrentUser;
+    import com.example.ecommerce.domain.exception.CartNotFoundException;
+    import com.example.ecommerce.domain.exception.EmptyCartException;
+    import com.example.ecommerce.domain.order.Order;
+    import com.example.ecommerce.domain.order.OrderId;
+    import com.example.ecommerce.domain.order.OrderItem;
+    import com.example.ecommerce.domain.order.OrderRepository;
+    import com.example.ecommerce.application.event.EventConsumer;
+    import com.example.ecommerce.domain.event.DomainEvent;
+    import com.example.ecommerce.application.event.DomainEventPublisher;
+    
+    public class PlaceOrderFromCartUseCase {
+    
+        private final CartRepository cartRepository;
+        private final OrderRepository orderRepository;
+        private final DomainEventPublisher eventPublisher;
+    
+        public PlaceOrderFromCartUseCase(
+                CartRepository cartRepository,
+                OrderRepository orderRepository,
+                DomainEventPublisher eventPublisher
+        ) {
+            this.cartRepository = cartRepository;
+            this.orderRepository = orderRepository;
+            this.eventPublisher = eventPublisher;
+        }
+    
+        private Order createOrderFromCart(Cart cart) {
+            return new Order(
+                    OrderId.newId(),
+                    cart.getItems().stream()
+                            .map(item -> new OrderItem(
+                                    item.getProductId(),
+                                    item.getQuantity()
+                            ))
+                            .toList()
+            );
+        }
+    
+        public void execute(String cartId, String userId) {
+            UserId uid = currentUser.id();
+    
+            Cart cart = cartRepository.findById(new CartId(cartId))
+                    .orElseThrow(() -> new CartNotFoundException(cartId));
+    
+            if (cart.isEmpty()) {
+                throw new EmptyCartException(cartId);
+            }
+    
+            CartOwnershipPolicy.assertOwner(cart, uid);
+    
+            Order order = createOrderFromCart(cart);
+            orderRepository.save(order);
+    
+            EventConsumer consumer = new EventConsumer(eventPublisher);
+    
+            for (DomainEvent event : order.pullDomainEvents()) {
+                consumer.accept(event);
+            }
+    
+            cart.clear();
+            cartRepository.save(cart);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/order/GetOrderUseCase.java
+LAST_MODIFIED: 2026-01-05 05:21:12
+============================================================
+
+    package com.example.ecommerce.application.order;
+    
+    import com.example.ecommerce.domain.exception.OrderNotFoundException;
+    import com.example.ecommerce.domain.order.Order;
+    import com.example.ecommerce.domain.order.OrderId;
+    import com.example.ecommerce.domain.order.OrderRepository;
+    import com.example.ecommerce.domain.user.UserId;
+    
+    public class GetOrderUseCase {
+    
+        private final OrderRepository orderRepository;
+    
+        public GetOrderUseCase(OrderRepository orderRepository) {
+            this.orderRepository = orderRepository;
+        }
+    
+        public OrderView execute(String orderId,  String userId) {
+            Order order = orderRepository
+                    .findById(new OrderId(orderId))
+                    .orElseThrow(() -> new OrderNotFoundException(orderId));
+    
+            UserId uid = new UserId(userId);
+    
+            Cart cart = cartRepository.findById(new CartId(cartId))
+                    .orElseThrow(() -> new CartNotFoundException(cartId));
+    
+            CartOwnershipPolicy.assertOwner(cart, uid);
+    
+            if (cart.isEmpty()) {
+                throw new EmptyCartException(cartId);
+            }
+    
+            return new OrderView(
+                    order.getId().value(),
+                    order.getStatus().name(),
+                    order.getItems().stream()
+                            .map(item -> new OrderItemView(
+                                    item.getProductId().value(),
+                                    item.getQuantity()
+                            ))
+                            .toList()
+            );
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/cart/RemoveItemFromCartUseCase.java
+LAST_MODIFIED: 2026-01-05 05:40:28
+============================================================
+
+    package com.example.ecommerce.application.cart;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    import com.example.ecommerce.domain.cart.CartId;
+    import com.example.ecommerce.domain.cart.CartRepository;
+    import com.example.ecommerce.domain.cart.ProductId;
+    import com.example.ecommerce.domain.exception.CartNotFoundException;
+    import com.example.ecommerce.application.security.CurrentUser;
+    
+    public class RemoveItemFromCartUseCase {
+    
+        private final CartRepository cartRepository;
+    
+        public RemoveItemFromCartUseCase(CartRepository cartRepository) {
+            this.cartRepository = cartRepository;
+        }
+    
+        public CartView execute(
+                String cartId,
+                CurrentUser currentUser,
+                String productId
+        ) {
+            CartId cid = new CartId(cartId);
+            UserId uid = currentUser.id();
+    
+            Cart cart = cartRepository.findById(cid)
+                    .orElseThrow(() -> new CartNotFoundException(cartId));
+    
+            if (cart.isEmpty()) {
+                throw new EmptyCartException(cartId);
+            }
+    
+            CartOwnershipPolicy.assertOwner(cart, uid);
+    
+            ProductId pid = new ProductId(productId);
+    
+            cart.removeItem(pid);
+            cartRepository.save(cart);
+    
+            return CartView.from(cart);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/cart/CartItemView.java
+LAST_MODIFIED: 2026-01-02 16:21:33
+============================================================
+
+    package com.example.ecommerce.application.cart;
+    
+    public record CartItemView(
+            String productId,
+            int quantity
+    ) {
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/cart/CartView.java
+LAST_MODIFIED: 2026-01-02 16:34:23
+============================================================
+
+    package com.example.ecommerce.application.cart;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    
+    import java.util.List;
+    
+    public record CartView(
+            String cartId,
+            List<CartItemView> items
+    ) {
+    
+        public static CartView from(Cart cart) {
+            return new CartView(
+                    cart.getId().value(),
+                    cart.getItems().stream()
+                            .map(item -> new CartItemView(
+                                    item.getProductId().value(),
+                                    item.getQuantity()
+                            ))
+                            .toList()
+            );
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/cart/AddItemToCartUseCase.java
+LAST_MODIFIED: 2026-01-05 05:38:13
+============================================================
+
+    package com.example.ecommerce.application.cart;
+    
+    import com.example.ecommerce.domain.cart.CartId;
+    import com.example.ecommerce.domain.cart.CartRepository;
+    import com.example.ecommerce.domain.user.UserId;
+    import com.example.ecommerce.application.security.CurrentUser;
+    
+    public class AddItemToCartUseCase {
+    
+        private final CartRepository cartRepository;
+    
+        public AddItemToCartUseCase(CartRepository cartRepository) {
+            this.cartRepository = cartRepository;
+        }
+    
+        public CartView execute(
+                String cartId,
+                CurrentUser currentUser,
+                String productId,
+                int quantity
+        ) {
+            CartId cid = new CartId(cartId);
+            UserId uid = currentUser.id();
+            ProductId pid = new ProductId(productId);
+    
+            Cart cart = cartRepository.findById(cid)
+                    .orElseGet(() -> new Cart(cid, uid));
+    
+            CartOwnershipPolicy.assertOwner(cart, uid);
+    
+            cart.addItem(pid, quantity);
+            cartRepository.save(cart);
+    
+            return CartView.from(cart);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/cart/CartOwnershipPolicy.java
+LAST_MODIFIED: 2026-01-04 20:16:44
+============================================================
+
+    package com.example.ecommerce.application.cart;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    import com.example.ecommerce.domain.user.UserId;
+    import com.example.ecommerce.domain.exception.CartNotFoundException;
+    
+    public final class CartOwnershipPolicy {
+    
+        private CartOwnershipPolicy() {
+        }
+    
+        public static void assertOwner(
+                Cart cart,
+                UserId userId
+        ) {
+            if (!cart.getOwnerId().equals(userId)) {
+                throw new CartNotFoundException(cart.getId().value());
+            }
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/cart/UpdateCartItemQuantityUseCase.java
+LAST_MODIFIED: 2026-01-05 05:39:45
+============================================================
+
+    package com.example.ecommerce.application.cart;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    import com.example.ecommerce.domain.cart.CartId;
+    import com.example.ecommerce.domain.cart.ProductId;
+    import com.example.ecommerce.domain.cart.CartRepository;
+    import com.example.ecommerce.domain.exception.CartNotFoundException;
+    
+    import com.example.ecommerce.domain.user.UserId;
+    import com.example.ecommerce.application.security.CurrentUser;
+    
+    public class UpdateCartItemQuantityUseCase {
+    
+        private final CartRepository cartRepository;
+    
+        public UpdateCartItemQuantityUseCase(CartRepository cartRepository) {
+            this.cartRepository = cartRepository;
+        }
+    
+        public CartView execute(
+            String cartId,
+            CurrentUser currentUser,
+            String productId,
+            int quantity
+        ) {
+            CartId cid = new CartId(cartId);
+            UserId uid = currentUser.id();
+    
+            Cart cart = cartRepository.findById(new CartId(cartId))
+                    .orElseThrow(() -> new CartNotFoundException(cartId));
+    
+            if (cart.isEmpty()) {
+                throw new EmptyCartException(cartId);
+            }
+    
+            CartOwnershipPolicy.assertOwner(cart, uid);
+    
+            ProductId pid = new ProductId(productId);
+    
+            cart.updateItemQuantity(pid, quantity);
+            cartRepository.save(cart);
+    
+            return CartView.from(cart);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/cart/GetCartUseCase.java
+LAST_MODIFIED: 2026-01-05 05:35:45
+============================================================
+
+    package com.example.ecommerce.application.cart;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    import com.example.ecommerce.domain.cart.CartId;
+    import com.example.ecommerce.domain.cart.CartRepository;
+    
+    import com.example.ecommerce.domain.user.UserId;
+    import com.example.ecommerce.application.security.CurrentUser;
+    
+    import com.example.ecommerce.application.cart.CartView;
+    import com.example.ecommerce.application.cart.CartItemView;
+    
+    import java.util.List;
+    
+    public class GetCartUseCase {
+    
+        private final CartRepository cartRepository;
+    
+        public GetCartUseCase(CartRepository cartRepository) {
+            this.cartRepository = cartRepository;
+        }
+    
+        public CartView execute(String cartId, CurrentUser currentUser) {
+    
+            CartId cid = new CartId(cartId);
+            UserId uid = currentUser.id();
+    
+            Cart cart = cartRepository.findById(cid)
+                    .orElseThrow(() -> new CartNotFoundException(cartId));
+    
+            CartOwnershipPolicy.assertOwner(cart, uid);
+    
+            List<CartItemView> items = cart.getItems().stream()
+                    .map(item -> new CartItemView(
+                            item.getProductId().value(),
+                            item.getQuantity()
+                    ))
+                    .toList();
+    
+            return new CartView(cart.getId().value(), items);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/cart/ClearCartUseCase.java
+LAST_MODIFIED: 2026-01-05 05:41:22
+============================================================
+
+    package com.example.ecommerce.application.cart;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    import com.example.ecommerce.domain.cart.CartId;
+    import com.example.ecommerce.domain.cart.CartRepository;
+    import com.example.ecommerce.domain.exception.CartNotFoundException;
+    
+    import com.example.ecommerce.domain.user.UserId;
+    import com.example.ecommerce.application.security.CurrentUser;
+    
+    public class ClearCartUseCase {
+    
+        private final CartRepository cartRepository;
+    
+        public ClearCartUseCase(CartRepository cartRepository) {
+            this.cartRepository = cartRepository;
+        }
+    
+        public void execute(String cartId, String userId) {
+            CartId cid = new CartId(cartId);
+            UserId uid = currentUser.id();
+    
+            Cart cart = cartRepository.findById(cid)
+                    .orElseThrow(() -> new CartNotFoundException(cartId));
+    
+            if (cart.isEmpty()) {
+                throw new EmptyCartException(cartId);
+            }
+    
+            CartOwnershipPolicy.assertOwner(cart, uid);
+    
+            cart.clear();
+            cartRepository.save(cart);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/event/DomainEventPublisher.java
+LAST_MODIFIED: 2026-01-03 06:29:26
+============================================================
+
+    package com.example.ecommerce.application.event;
+    
+    import com.example.ecommerce.domain.event.DomainEvent;
+    
+    public interface DomainEventPublisher {
+        void publish(DomainEvent event);
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/event/EventConsumer.java
+LAST_MODIFIED: 2026-01-04 08:31:31
+============================================================
+
+    package com.example.ecommerce.application.event;
+    
+    import com.example.ecommerce.domain.event.DomainEvent;
+    
+    public class EventConsumer {
+    
+        private final DomainEventPublisher publisher;
+    
+        public EventConsumer(DomainEventPublisher publisher) {
+            this.publisher = publisher;
+        }
+    
+        public void accept(DomainEvent event) {
+            publisher.publish(event);
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/security/FixedCurrentUser.java
+LAST_MODIFIED: 2026-01-05 05:31:50
+============================================================
+
+    package com.example.ecommerce.application.security;
+    
+    import com.example.ecommerce.domain.user.UserId;
+    
+    public class FixedCurrentUser implements CurrentUser {
+    
+        private final UserId userId;
+    
+        public FixedCurrentUser(String userId) {
+            this.userId = new UserId(userId);
+        }
+    
+        @Override
+        public UserId id() {
+            return userId;
+        }
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/application/security/CurrentUser.java
+LAST_MODIFIED: 2026-01-05 05:30:57
+============================================================
+
+    package com.example.ecommerce.application.security;
+    
+    import com.example.ecommerce.domain.user.UserId;
+    
+    public interface CurrentUser {
+    
+        UserId id();
+    }
+
+============================================================
+FILE: ./src/main/java/com/example/ecommerce/EcommerceApplication.java
+LAST_MODIFIED: 2025-12-31 18:31:45
+============================================================
+
+    package com.example.ecommerce;
+    
+    import org.springframework.boot.SpringApplication;
+    import org.springframework.boot.autoconfigure.SpringBootApplication;
+    
+    @SpringBootApplication
+    public class EcommerceApplication {
+    
+        public static void main(String[] args) {
+            SpringApplication.run(EcommerceApplication.class, args);
+        }
+    }
+
+============================================================
+FILE: ./src/test/java/com/example/ecommerce/infrastructure/web/cart/CartControllerTest.java
+LAST_MODIFIED: 2026-01-02 17:32:35
+============================================================
+
+        package com.example.ecommerce.infrastructure.web.cart;
+    
+        import com.example.ecommerce.EcommerceApplication;
+        import com.example.ecommerce.application.cart.*;
+        import com.example.ecommerce.domain.cart.CartRepository;
+        import com.example.ecommerce.infrastructure.persistence.memory.cart.InMemoryCartRepository;
+    
+        import org.springframework.test.context.ContextConfiguration;
+        import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+        import org.springframework.context.annotation.Bean;
+        import org.springframework.context.annotation.Import;
+        import org.springframework.beans.factory.annotation.Autowired;
+    
+        import org.springframework.test.web.servlet.MockMvc;
+        import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+        import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+        import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+        import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+        import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+    
+        import org.junit.jupiter.api.Test;
+    
+        @WebMvcTest(controllers = CartController.class)
+        @Import(CartControllerTest.TestConfig.class)
+        class CartControllerTest {
+    
+            @Autowired
+            private MockMvc mockMvc;
+    
+            @Test
+            void shouldAddItemToCart() throws Exception {
+                mockMvc.perform(post("/carts/cart-add/items")
+                       .contentType("application/json")
+                        .content("""
+                            {
+                                "productId": "product-1",
+                                "quantity": 2
+                            }
+                        """))
+                        .andExpect(status().isOk());
+    
+                mockMvc.perform(get("/carts/cart-add"))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.items[0].productId").value("product-1"))
+                        .andExpect(jsonPath("$.items[0].quantity").value(2));
+            }
+    
+            @Test
+            void shouldUpdateItemQuantity() throws Exception {
+                mockMvc.perform(post("/carts/cart-update/items")
+                        .contentType("application/json")
+                        .content("""
+                            {
+                                "productId": "product-1",
+                                "quantity": 2
+                            }
+                        """));
+    
+                mockMvc.perform(put("/carts/cart-update/items/product-1")
+                        .contentType("application/json")
+                        .content("""
+                            {
+                                "quantity": 5
+                            }
+                        """))
+                        .andExpect(status().isOk());
+    
+                mockMvc.perform(get("/carts/cart-update"))
+                        .andExpect(jsonPath("$.items[0].quantity").value(5));
+            }
+    
+            @Test
+            void shouldClearCart() throws Exception {
+                mockMvc.perform(post("/carts/cart-clear/items")
+                        .contentType("application/json")
+                        .content("""
+                            {
+                                "productId": "product-1",
+                                "quantity": 2
+                            }
+                        """));
+    
+                mockMvc.perform(delete("/carts/cart-clear"))
+                            .andExpect(status().isNoContent());
+    
+                mockMvc.perform(get("/carts/cart-clear"))
+                        .andExpect(jsonPath("$.items").isEmpty());
+            }
+    
+            @Test
+            void shouldReturn404WhenUpdatingNonExistingCart() throws Exception {
+                mockMvc.perform(put("/carts/cart-404/items/product-1")
+                        .contentType("application/json")
+                        .content("""
+                            { "quantity": 1 }
+                        """))
+                        .andExpect(status().isNotFound())
+                        .andExpect(jsonPath("$.message").exists());
+            }
+    
+            @Test
+            void shouldRemoveItemFromCart() throws Exception {
+                mockMvc.perform(post("/carts/cart-remove-item/items")
+                        .contentType("application/json")
+                        .content("""
+                            {
+                                "productId": "product-1",
+                                "quantity": 2
+                            }
+                        """));
+    
+                mockMvc.perform(delete("/carts/cart-remove-item/items/product-1"))
+                        .andExpect(status().isOk());
+    
+                mockMvc.perform(get("/carts/cart-remove-item"))
+                        .andExpect(jsonPath("$.items").isEmpty());
+            }
+    
+            @Test
+            void shouldReturnEmptyCartWhenCartExistsButHasNoItems() throws Exception {
+                mockMvc.perform(get("/carts/cart-noitems"))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.cartId").value("cart-noitems"))
+                        .andExpect(jsonPath("$.items").isArray())
+                        .andExpect(jsonPath("$.items").isEmpty());
+            }
+    
+            static class TestConfig {
+    
+                @Bean
+                CartRepository cartRepository() {
+                    return new InMemoryCartRepository();
+                }
+    
+                @Bean
+                AddItemToCartUseCase addItemToCartUseCase(CartRepository repo) {
+                    return new AddItemToCartUseCase(repo);
+                }
+    
+                @Bean
+                RemoveItemFromCartUseCase removeItemFromCartUseCase(CartRepository repo) {
+                    return new RemoveItemFromCartUseCase(repo);
+                }
+    
+                @Bean
+                UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase(CartRepository repo) {
+                    return new UpdateCartItemQuantityUseCase(repo);
+                }
+    
+                @Bean
+                ClearCartUseCase clearCartUseCase(CartRepository repo) {
+                    return new ClearCartUseCase(repo);
+                }
+    
+                @Bean
+                GetCartUseCase getCartUseCase(CartRepository repo) {
+                    return new GetCartUseCase(repo);
+                }
+            }
+        }
+
+============================================================
+FILE: ./src/test/java/com/example/ecommerce/domain/order/OrderControllerTest.java
+LAST_MODIFIED: 2026-01-04 08:56:46
+============================================================
+
+    package com.example.ecommerce.infrastructure.web.order;
+    
+    import com.example.ecommerce.application.order.PayOrderUseCase;
+    import com.example.ecommerce.application.order.GetOrderUseCase;
+    import com.example.ecommerce.domain.order.*;
+    import com.example.ecommerce.domain.cart.ProductId;
+    import com.example.ecommerce.infrastructure.persistence.memory.order.InMemoryOrderRepository;
+    import com.example.ecommerce.infrastructure.web.ApiExceptionHandler;
+    
+    import org.junit.jupiter.api.Test;
+    import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Import;
+    import org.springframework.test.web.servlet.MockMvc;
+    import org.springframework.beans.factory.annotation.Autowired;
+    
+    import java.util.List;
+    
+    import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+    import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+    import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+    
+    @WebMvcTest(controllers = OrderController.class)
+    @Import(OrderControllerTest.TestConfig.class)
+    class OrderControllerTest {
+    
+        @Autowired
+        private MockMvc mockMvc;
+    
+        @Autowired
+        private InMemoryOrderRepository orderRepository;
+    
+        @Test
+        void shouldNotAllowPayingAlreadyPaidOrder() throws Exception {
+            orderRepository.clear();
+    
+            Order order = new Order(
+                    new OrderId("order-1"),
+                    List.of(new OrderItem(new ProductId("product-1"), 1))
+            );
+    
+            order.pullDomainEvents(); // clear OrderCreated
+            order.markAsPaid();
+    
+            orderRepository.save(order);
+    
+            mockMvc.perform(post("/orders/order-1/pay"))
+                    .andExpect(status().isConflict());
+    
+        }
+    
+        @Test
+        void shouldReturnOrderById() throws Exception {
+            orderRepository.clear();
+    
+            Order order = new Order(
+                    new OrderId("order-1"),
+                    List.of(
+                            new OrderItem(new ProductId("product-1"), 2),
+                            new OrderItem(new ProductId("product-2"), 1)
+                    )
+            );
+    
+            order.pullDomainEvents();
+            orderRepository.save(order);
+    
+            mockMvc.perform(get("/orders/order-1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.orderId").value("order-1"))
+                    .andExpect(jsonPath("$.status").value("CREATED"))
+                    .andExpect(jsonPath("$.items").isArray())
+                    .andExpect(jsonPath("$.items.length()").value(2));
+        }
+    
+        static class TestConfig {
+    
+            @Bean
+            InMemoryOrderRepository orderRepository() {
+                return new InMemoryOrderRepository();
+            }
+    
+            @Bean
+            PayOrderUseCase payOrderUseCase(
+                    OrderRepository repo
+            ) {
+                return new PayOrderUseCase(repo, event -> {});
+            }
+    
+            @Bean
+            GetOrderUseCase getOrderUseCase(
+                    OrderRepository orderRepository
+            ) {
+                return new GetOrderUseCase(orderRepository);
+            }
+    
+            @Bean
+            ApiExceptionHandler apiExceptionHandler() {
+                return new ApiExceptionHandler();
+            }
+        }
+    }
+
+============================================================
+FILE: ./src/test/java/com/example/ecommerce/domain/order/OrderTest.java
+LAST_MODIFIED: 2026-01-03 15:40:22
+============================================================
+
+    package com.example.ecommerce.domain.order;
+    
+    import com.example.ecommerce.domain.event.DomainEvent;
+    
+    import java.util.List;
+    
+    public OrderTest {
+    
+        @Test
+        void shouldRegisterOrderCreatedEvent() {
+            Order order = new Order(
+                    new OrderId("order-1"),
+                    List.of(new OrderItem(new ProductId("product-1"), 1))
+            );
+    
+            var events = order.pullDomainEvents();
+    
+            assertEquals(1, events.size());
+            assertTrue(events.get(0) instanceof OrderCreatedEvent);
+        }
+    
+        @Test
+        void shouldRegisterOrderPaidEvent() {
+            Order order = new Order(
+                    new OrderId("order-1"),
+                    List.of(new OrderItem(new ProductId("product-1"), 1))
+            );
+    
+            order.pullDomainEvents(); // limpa OrderCreated
+    
+            order.markAsPaid();
+    
+            var events = order.pullDomainEvents();
+    
+            assertEquals(1, events.size());
+            assertTrue(events.get(0) instanceof OrderPaidEvent);
+        }
+    
+        @Test
+        void shouldThrowWhenPayingAlreadyPaidOrder() {
+            Order order = new Order(
+                    new OrderId("order-1"),
+                    List.of(new OrderItem(new ProductId("product-1"), 1))
+            );
+    
+            order.pullDomainEvents(); // clear created
+            order.markAsPaid();
+    
+            assertThrows(
+                    OrderAlreadyPaidException.class,
+                    order::markAsPaid
+            );
+        }
+    }
+============================================================
+FILE: ./src/test/java/com/example/ecommerce/domain/cart/CartTest.java
+LAST_MODIFIED: 2026-01-05 05:57:35
+============================================================
+
+    package com.example.ecommerce.domain.cart;
+    import com.example.ecommerce.application.security.CurrentUser;
+    
+    import com.example.ecommerce.domain.exception.CartItemNotFoundException;
+    import com.example.ecommerce.domain.exception.InvalidQuantityException;
+    import org.junit.jupiter.api.Test;
+    
+    import static org.junit.jupiter.api.Assertions.*;
+    
+    import java.util.Map;
+    
+    class CartTest {
+    
+        @Test
+        void shouldAddNewItemToCart() {
+            UserId uid = currentUser.id();
+            Cart cart = new Cart(new CartId("cart-1", currentUser));
+    
+            cart.addItem(new ProductId("product-1"), 2);
+    
+            assertEquals(1, cart.getItems().size());
+            CartItem item = cart.getItems().iterator().next();
+            assertEquals("product-1", item.getProductId().value());
+            assertEquals(2, item.getQuantity());
+        }
+    
+        @Test
+        void shouldIncreaseQuantityWhenAddingSameProduct() {
+            UserId uid = currentUser.id();
+            Cart cart = new Cart(new CartId("cart-1", currentUser));
+    
+            cart.addItem(new ProductId("product-1"), 2);
+            cart.addItem(new ProductId("product-1"), 3);
+    
+            CartItem item = cart.getItems().iterator().next();
+            assertEquals(5, item.getQuantity());
+        }
+    
+        @Test
+        void shouldThrowExceptionWhenAddingInvalidQuantity() {
+            UserId uid = currentUser.id();
+            Cart cart = new Cart(new CartId("cart-1"), currentUser);
+    
+            assertThrows(
+                    InvalidQuantityException.class,
+                    () -> cart.addItem(new ProductId("product-1"), 0)
+            );
+        }
+    
+        @Test
+        void shouldUpdateItemQuantity() {
+            UserId uid = currentUser.id();
+            Cart cart = new Cart(new CartId("cart-1"), currentUser);
+            ProductId pid = new ProductId("product-1");
+    
+            cart.addItem(pid, 2);
+            cart.updateItemQuantity(pid, 5);
+    
+            CartItem item = cart.getItems().iterator().next();
+            assertEquals(5, item.getQuantity());
+        }
+    
+        @Test
+        void shouldThrowWhenUpdatingNonExistingItem() {
+            UserId uid = currentUser.id();
+            Cart cart = new Cart(new CartId("cart-1"), currentUser);
+    
+            assertThrows(
+                    CartItemNotFoundException.class,
+                    () -> cart.updateItemQuantity(new ProductId("product-1"), 3)
+            );
+        }
+    
+        @Test
+        void shouldRemoveItem() {
+            UserId uid = currentUser.id();
+            Cart cart = new Cart(new CartId("cart-1"), currentUser);
+            ProductId pid = new ProductId("product-1");
+    
+            cart.addItem(pid, 2);
+            cart.removeItem(pid);
+    
+            assertTrue(cart.getItems().isEmpty());
+        }
+    
+        @Test
+        void shouldThrowWhenRemovingNonExistingItem() {
+            UserId uid = currentUser.id();
+            Cart cart = new Cart(new CartId("cart-1"), currentUser);
+    
+            assertThrows(
+                    CartItemNotFoundException.class,
+                    () -> cart.removeItem(new ProductId("product-1"))
+            );
+        }
+    
+        @Test
+        void shouldClearCart() {
+            UserId uid = currentUser.id();
+            Cart cart = new Cart(new CartId("cart-1"), currentUser);
+    
+            cart.addItem(new ProductId("product-1"), 2);
+            cart.addItem(new ProductId("product-2"), 1);
+    
+            cart.clear();
+    
+            assertTrue(cart.isEmpty());
+        }
+    
+        @Test
+        void shouldRehydrateCartWithoutApplyingBusinessRules() {
+            CartId cartId = new CartId("cart-1");
+    
+            Map<ProductId, Integer> persistedItems = Map.of(
+                    new ProductId("product-1"), 10,
+                    new ProductId("product-2"), 5
+            );
+    
+            UserId uid = currentUser.id();
+            Cart cart = Cart.rehydrate(cartId, userId, persistedItems);
+    
+            assertEquals(2, cart.getItems().size());
+        }
+    }
+
+============================================================
+FILE: ./src/test/java/com/example/ecommerce/application/order/PayOrderUseCaseTest.java
+LAST_MODIFIED: 2026-01-04 06:19:47
+============================================================
+
+    package com.example.ecommerce.application.order;
+    
+    import com.example.ecommerce.domain.order.Order;
+    import com.example.ecommerce.domain.order.OrderId;
+    import com.example.ecommerce.domain.order.OrderItem;
+    import com.example.ecommerce.domain.order.OrderStatus;
+    import com.example.ecommerce.domain.cart.ProductId;
+    import com.example.ecommerce.domain.order.event.OrderPaidEvent;
+    import com.example.ecommerce.domain.exception.OrderNotFoundException;
+    import com.example.ecommerce.domain.exception.OrderAlreadyPaidException;
+    import com.example.ecommerce.infrastructure.persistence.memory.order.InMemoryOrderRepository;
+    
+    import org.junit.jupiter.api.Test;
+    
+    import java.util.List;
+    
+    import static org.junit.jupiter.api.Assertions.*;
+    
+    class PayOrderUseCaseTest {
+    
+        @Test
+        void shouldPayOrderAndPublishEvent() {
+            InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
+            FakeDomainEventPublisher publisher = new FakeDomainEventPublisher();
+    
+            orderRepository.clear();
+    
+            Order order = new Order(
+                    new OrderId("order-1"),
+                    List.of(new OrderItem(new ProductId("product-1"), 1))
+            );
+    
+            order.pullDomainEvents();
+    
+            orderRepository.save(order);
+    
+            PayOrderUseCase useCase =
+                    new PayOrderUseCase(orderRepository, publisher);
+    
+            useCase.execute("order-1");
+    
+            Order persisted = orderRepository
+                    .findById(new OrderId("order-1"))
+                    .orElseThrow();
+    
+            assertEquals(OrderStatus.PAID, persisted.getStatus());
+    
+            assertEquals(1, publisher.count());
+            assertTrue(publisher.first() instanceof OrderPaidEvent);
+        }
+    
+        @Test
+        void shouldFailWhenOrderDoesNotExist() {
+            PayOrderUseCase useCase =
+                    new PayOrderUseCase(
+                            new InMemoryOrderRepository(),
+                            event -> {}
+                    );
+    
+            assertThrows(
+                    OrderNotFoundException.class,
+                    () -> useCase.execute("missing-order")
+            );
+        }
+    
+        @Test
+        void shouldFailWhenOrderIsAlreadyPaid() {
+            InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
+    
+            orderRepository.clear();
+    
+            Order order = new Order(
+                    new OrderId("order-1"),
+                    List.of(new OrderItem(new ProductId("product-1"), 1))
+            );
+            order.markAsPaid();
+    
+            orderRepository.save(order);
+    
+            PayOrderUseCase useCase =
+                    new PayOrderUseCase(orderRepository, event -> {});
+    
+            assertThrows(
+                    OrderAlreadyPaidException.class,
+                    () -> useCase.execute("order-1")
+            );
+        }
+    }
+
+============================================================
+FILE: ./src/test/java/com/example/ecommerce/application/order/fake/FakeDomainEventPublisher.java
+LAST_MODIFIED: 2026-01-03 09:54:46
+============================================================
+
+    package com.example.ecommerce.application.order;
+    
+    import com.example.ecommerce.application.event.DomainEventPublisher;
+    import com.example.ecommerce.domain.event.DomainEvent;
+    
+    import java.util.List;
+    import java.util.ArrayList;
+    
+    class FakeDomainEventPublisher implements DomainEventPublisher {
+    
+        private final List<DomainEvent> events = new ArrayList<>();
+    
+        @Override
+        public void publish(DomainEvent event) {
+            events.add(event);
+        }
+    
+        int count() {
+            return events.size();
+        }
+    
+        DomainEvent first() {
+            return events.get(0);
+        }
+    }
+
+============================================================
+FILE: ./src/test/java/com/example/ecommerce/application/order/PlaceOrderFromCartUseCaseTest.java
+LAST_MODIFIED: 2026-01-04 06:39:37
+============================================================
+
+    package com.example.ecommerce.application.order;
+    
+    import com.example.ecommerce.domain.cart.Cart;
+    import com.example.ecommerce.domain.cart.CartId;
+    import com.example.ecommerce.domain.cart.ProductId;
+    import com.example.ecommerce.domain.exception.CartNotFoundException;
+    import com.example.ecommerce.domain.exception.EmptyCartException;
+    import com.example.ecommerce.domain.order.Order;
+    import com.example.ecommerce.domain.order.event.OrderCreatedEvent;
+    import com.example.ecommerce.application.event.DomainEventPublisher;
+    import com.example.ecommerce.infrastructure.event.LoggingDomainEventPublisher;
+    import com.example.ecommerce.infrastructure.persistence.memory.cart.InMemoryCartRepository;
+    import com.example.ecommerce.infrastructure.persistence.memory.order.InMemoryOrderRepository;
+    
+    import org.junit.jupiter.api.Test;
+    
+    import static org.junit.jupiter.api.Assertions.*;
+    
+    class PlaceOrderFromCartUseCaseTest {
+    
+        @Test
+        void shouldPlaceOrderFromCartAndClearCart() {
+            InMemoryCartRepository cartRepository = new InMemoryCartRepository();
+            InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
+    
+            orderRepository.clear();
+    
+            Cart cart = new Cart(new CartId("cart-1"));
+            cart.addItem(new ProductId("product-1"), 2);
+            cart.addItem(new ProductId("product-2"), 1);
+    
+            cartRepository.save(cart);
+    
+            FakeDomainEventPublisher publisher = new FakeDomainEventPublisher();
+    
+            PlaceOrderFromCartUseCase useCase =
+                    new PlaceOrderFromCartUseCase(
+                            cartRepository,
+                            orderRepository,
+                            publisher
+                    );
+    
+            useCase.execute("cart-1");
+    
+            assertEquals(1, publisher.count());
+            assertTrue(publisher.first() instanceof OrderCreatedEvent);
+    
+            OrderCreatedEvent event =
+                    (OrderCreatedEvent) publisher.first();
+    
+            Order order = orderRepository
+                    .findById(event.orderId())
+                    .orElseThrow();
+    
+            assertEquals(2, order.getItems().size());
+    
+            Cart persistedCart = cartRepository
+                    .findById(new CartId("cart-1"))
+                    .orElseThrow();
+    
+            assertTrue(persistedCart.isEmpty());
+        }
+    
+    
+        @Test void shouldThrowWhenCartIsEmpty() {
+                InMemoryCartRepository cartRepository = new InMemoryCartRepository();
+                cartRepository.save(new Cart(new CartId("cart-empty")));
+        
+                PlaceOrderFromCartUseCase useCase =
+                        new PlaceOrderFromCartUseCase(
+                                cartRepository,
+                                new InMemoryOrderRepository(),
+                                event -> {} // publisher fake
+                );
+    
+                assertThrows( EmptyCartException.class, () -> useCase.execute("cart-empty") );
+        }
+    }
+
+============================================================
+FILE: ./src/test/java/com/example/ecommerce/application/order/OrderUseCaseTest.java
+LAST_MODIFIED: 2026-01-03 14:30:46
+============================================================
+
+    package com.example.ecommerce.domain.order;
+    
+    import com.example.ecommerce.domain.cart.ProductId;
+    import org.junit.jupiter.api.Test;
+    
+    import java.util.List;
+    
+    import static org.junit.jupiter.api.Assertions.*;
+    
+    class OrderUseCaseTest {
+    
+        @Test
+        void shouldCreateOrderWithItems() {
+            OrderId orderId = new OrderId("order-1");
+    
+            Order order = new Order(
+                    orderId,
+                    List.of(
+                            new OrderItem(new ProductId("product-1"), 2),
+                            new OrderItem(new ProductId("product-2"), 1)
+                    )
+            );
+    
+            assertEquals(orderId, order.getId());
+            assertEquals(2, order.getItems().size());
+        }
+    
+        @Test
+        void shouldExposeItemsAsUnmodifiableList() {
+            Order order = new Order(
+                    new OrderId("order-1"),
+                    List.of(new OrderItem(new ProductId("product-1"), 1))
+            );
+    
+            assertThrows(
+                    UnsupportedOperationException.class,
+                    () -> order.getItems().add(
+                            new OrderItem(new ProductId("product-2"), 1)
+                    )
+            );
+        }
+    
+        @Test
+        void shouldAllowCreatingOrderWithEmptyItemList() {
+            Order order = new Order(
+                    new OrderId("order-1"),
+                    List.of()
+            );
+    
+            assertTrue(order.getItems().isEmpty());
+        }
+    
+        @Test
+        void shouldNotAllowNullOrderIdValue() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> new OrderId(null)
+            );
+        }
+    
+        @Test
+        void shouldGenerateNewOrderId() {
+            OrderId id1 = OrderId.newId();
+            OrderId id2 = OrderId.newId();
+    
+            assertNotNull(id1.value());
+            assertNotEquals(id1.value(), id2.value());
+        }
+    
+        @Test
+        void shouldCreateOrderItem() {
+            ProductId productId = new ProductId("product-1");
+    
+            OrderItem item = new OrderItem(productId, 2);
+    
+            assertEquals(productId, item.getProductId());
+            assertEquals(2, item.getQuantity());
+        }
+    }
+

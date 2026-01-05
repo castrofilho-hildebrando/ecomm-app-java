@@ -1,0 +1,15 @@
+[versions]
+springboot = "3.3.5"
+junit = "5.10.2"
+junitplatform = "1.10.2"
+mongo = "3.3.5"
+
+[libraries]
+springboot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "springboot" }
+springboot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "springboot" }
+springboot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "springboot" }
+
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitplatform" }
+
+springboot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb", version.ref = "mongo" }
