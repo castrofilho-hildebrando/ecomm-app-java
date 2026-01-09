@@ -4,7 +4,6 @@ import com.example.ecommerce.domain.cart.Cart;
 import com.example.ecommerce.domain.cart.CartId;
 import com.example.ecommerce.domain.cart.CartRepository;
 import com.example.ecommerce.infrastructure.mapper.CartMapper;
-
 import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
@@ -16,7 +15,7 @@ public class MongoCartRepository implements CartRepository {
     public MongoCartRepository(SpringDataCartRepository repository) {
         this.repository = repository;
     }
-    
+
     @Override
     public Optional<Cart> findById(CartId id) {
         return repository.findById(id.value())
@@ -29,7 +28,7 @@ public class MongoCartRepository implements CartRepository {
     }
 
     @Override
-    public void delete(Cart cart) {
-        springDataCartRepository.deleteById(cart.value());
+    public void delete(CartId id) { // CHANGED: Now matches CartRepository interface
+        repository.deleteById(id.value());
     }
 }

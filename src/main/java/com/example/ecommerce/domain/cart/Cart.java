@@ -13,17 +13,15 @@ public class Cart {
     private final Map<ProductId, CartItem> items;
 
     public Cart(CartId id, UserId ownerId) {
-        this(id, ownerId, new HashMap<>());
+            this.id = id;
+            this.ownerId = ownerId;
+            this.items = new HashMap<>();
     }
 
-    private Cart(
-            CartId id,
-            UserId ownerId,
-            Map<ProductId, CartItem> items
-    ) {
-        this.id = Objects.requireNonNull(id);
-        this.ownerId = Objects.requireNonNull(ownerId);
-        this.items = items;
+    public Cart(CartId id, UserId ownerId, Map<ProductId, CartItem> items) {
+            this.id = id;
+            this.ownerId = ownerId;
+            this.items = new HashMap<>(items);
     }
 
     public CartId getId() {

@@ -20,8 +20,10 @@ repositories {
 dependencies {
     implementation libs.springboot.starter
     implementation libs.springboot.starter.web
-    implementation(libs.springboot.starter.data.mongodb)
+    implementation libs.springboot.starter.security
+    implementation libs.springboot.starter.data.mongodb
     testImplementation libs.springboot.starter.test
+    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation libs.junit.jupiter
     testRuntimeOnly libs.junit.platform.launcher
 }

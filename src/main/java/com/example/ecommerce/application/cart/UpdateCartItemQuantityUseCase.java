@@ -2,10 +2,11 @@ package com.example.ecommerce.application.cart;
 
 import com.example.ecommerce.domain.cart.Cart;
 import com.example.ecommerce.domain.cart.CartId;
+import com.example.ecommerce.domain.cart.CartOwnershipPolicy;
 import com.example.ecommerce.domain.cart.ProductId;
 import com.example.ecommerce.domain.cart.CartRepository;
 import com.example.ecommerce.domain.exception.CartNotFoundException;
-
+import com.example.ecommerce.domain.exception.EmptyCartException;
 import com.example.ecommerce.domain.user.UserId;
 import com.example.ecommerce.application.security.CurrentUser;
 
@@ -23,7 +24,6 @@ public class UpdateCartItemQuantityUseCase {
         String productId,
         int quantity
     ) {
-        CartId cid = new CartId(cartId);
         UserId uid = currentUser.id();
 
         Cart cart = cartRepository.findById(new CartId(cartId))

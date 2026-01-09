@@ -4,6 +4,7 @@ import com.example.ecommerce.domain.event.DomainEvent;
 import com.example.ecommerce.domain.order.event.OrderCreatedEvent;
 import com.example.ecommerce.domain.order.event.OrderPaidEvent;
 import com.example.ecommerce.domain.exception.OrderAlreadyPaidException;
+import com.example.ecommerce.domain.exception.PaidOrderCannotBeCancelledException;
 
 import java.util.List;
 import java.util.ArrayList;

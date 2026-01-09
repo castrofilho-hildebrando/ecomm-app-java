@@ -1,10 +1,20 @@
 package com.example.ecommerce.domain.order;
 
+import com.example.ecommerce.domain.cart.ProductId;
 import com.example.ecommerce.domain.event.DomainEvent;
+import com.example.ecommerce.domain.exception.OrderAlreadyPaidException;
+import com.example.ecommerce.domain.order.event.OrderCreatedEvent;
+import com.example.ecommerce.domain.order.event.OrderPaidEvent;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-public OrderTest {
+import org.junit.jupiter.api.Test;
+
+public class OrderTest {
 
     @Test
     void shouldRegisterOrderCreatedEvent() {

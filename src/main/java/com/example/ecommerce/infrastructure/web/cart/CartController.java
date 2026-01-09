@@ -2,6 +2,8 @@ package com.example.ecommerce.infrastructure.web.cart;
 
 import com.example.ecommerce.application.cart.*;
 import com.example.ecommerce.application.security.CurrentUser;
+import com.example.ecommerce.infrastructure.security.SecurityContextCurrentUser; // Added
+import org.springframework.security.core.Authentication; // Added
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
@@ -34,17 +36,18 @@ public class CartController {
     @PostMapping("/{cartId}/items")
     public CartResponse addItem(
             @PathVariable String cartId,
-            Spring userId,
+            Authentication authentication, // FIX: Replaced 'Spring userId' with valid Authentication
             @RequestBody AddItemRequest request
     ) {
-        CurrentUser currentUser = new FixedCurrentUser("user-1");
+        // Use the security context to identify the user instead of hardcoding "user-1"
+        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
+
         CartView view = addItemToCartUseCase.execute(
                 cartId,
                 currentUser,
                 request.productId(),
                 request.quantity()
         );
-
         return CartResponse.from(view);
     }
 
@@ -52,25 +55,26 @@ public class CartController {
     public CartResponse updateItemQuantity(
             @PathVariable String cartId,
             @PathVariable String productId,
+            Authentication authentication, // FIX: Injected security context
             @RequestBody UpdateItemQuantityRequest request
     ) {
-        CurrentUser currentUser = new FixedCurrentUser("user-1");
+        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
         CartView view = updateCartItemQuantityUseCase.execute(
                 cartId,
                 currentUser,
                 productId,
                 request.quantity()
         );
-
         return CartResponse.from(view);
     }
 
     @DeleteMapping("/{cartId}/items/{productId}")
     public CartResponse removeItem(
             @PathVariable String cartId,
-            @PathVariable String productId
+            @PathVariable String productId,
+            Authentication authentication // FIX: Injected security context
     ) {
-        CurrentUser currentUser = new FixedCurrentUser("user-1");
+        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
         CartView view = removeItemFromCartUseCase.execute(
                 cartId,
                 currentUser,
@@ -81,23 +85,16 @@ public class CartController {
 
     @DeleteMapping("/{cartId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void clearCart(@PathVariable String cartId) {
-        CurrentUser currentUser = new FixedCurrentUser("user-1");
+    public void clearCart(@PathVariable String cartId, Authentication authentication) {
+        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
         clearCartUseCase.execute(cartId, currentUser);
     }
 
     @GetMapping("/{cartId}")
-    public CartResponse getCart(@PathVariable String cartId) {
-        CurrentUser currentUser = new FixedCurrentUser("user-1");
+    public CartResponse getCart(@PathVariable String cartId, Authentication authentication) {
+        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
         CartView cartView = getCartUseCase.execute(cartId, currentUser);
 
-        List<CartItemResponse> items = cartView.items().stream()
-                .map(item -> new CartItemResponse(
-                        item.productId(),
-                        item.quantity()
-                ))
-                .toList();
-
-        return new CartResponse(cartView.cartId(), items);
+        return CartResponse.from(cartView);
     }
 }

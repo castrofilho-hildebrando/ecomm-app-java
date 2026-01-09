@@ -2,6 +2,8 @@ package com.example.ecommerce.infrastructure.config;
 
 import com.example.ecommerce.application.event.DomainEventPublisher;
 import com.example.ecommerce.application.order.PayOrderUseCase;
+import com.example.ecommerce.application.order.PlaceOrderFromCartUseCase;
+import com.example.ecommerce.domain.cart.CartRepository;
 import com.example.ecommerce.domain.order.OrderRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +28,7 @@ public class OrderConfig {
     }
 
     @Bean
-    public PlaceOrderFromCartUseCase(
+    public PlaceOrderFromCartUseCase placeOrderFromCartUseCase(
             CartRepository cartRepository,
             OrderRepository orderRepository,
             DomainEventPublisher eventPublisher

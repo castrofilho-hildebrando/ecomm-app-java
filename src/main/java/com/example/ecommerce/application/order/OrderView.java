@@ -3,8 +3,7 @@ package com.example.ecommerce.application.order;
 import java.util.List;
 
 public record OrderView(
-        String orderId,
-        String status,
-        List<OrderItemView> items
-) {
-}
+    String id,
+    List<OrderItemView> items,
+    String status
+) {}

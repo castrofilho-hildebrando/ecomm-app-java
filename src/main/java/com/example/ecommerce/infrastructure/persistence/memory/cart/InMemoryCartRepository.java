@@ -23,7 +23,11 @@ public class InMemoryCartRepository implements CartRepository {
     }
 
     @Override
-    public void delete(Cart cart) {
-        storage.remove(cart.value());
+    public void delete(CartId id) {
+        storage.remove(id.value());
+    }
+
+    public void clear() {
+        this.storage.clear();
     }
 }

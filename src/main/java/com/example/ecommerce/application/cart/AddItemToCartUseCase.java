@@ -1,7 +1,10 @@
 package com.example.ecommerce.application.cart;
 
+import com.example.ecommerce.domain.cart.Cart;
 import com.example.ecommerce.domain.cart.CartId;
+import com.example.ecommerce.domain.cart.CartOwnershipPolicy;
 import com.example.ecommerce.domain.cart.CartRepository;
+import com.example.ecommerce.domain.cart.ProductId;
 import com.example.ecommerce.domain.user.UserId;
 import com.example.ecommerce.application.security.CurrentUser;
 
