@@ -1,0 +1,50 @@
+/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/order/OrderController.java:39: error: incompatible types: void cannot be converted to OrderView
+        return placeOrderFromCartUseCase.execute(cartId, currentUser);
+                                                ^
+/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/order/OrderController.java:49: error: method execute in class PayOrderUseCase cannot be applied to given types;
+payOrderUseCase.execute(orderId, currentUser);
+               ^
+  required: String
+  found:    String,CurrentUser
+  reason: actual and formal argument lists differ in length
+/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/config/OrderConfig.java:36: error: constructor PlaceOrderFromCartUseCase in class PlaceOrderFromCartUseCase cannot be applied to given types;
+        return new PlaceOrderFromCartUseCase(cartRepository, orderRepository, eventPublisher);
+               ^
+  required: CartRepository,OrderRepository,ProductGateway,DomainEventPublisher
+  found:    CartRepository,OrderRepository,DomainEventPublisher
+  reason: actual and formal argument lists differ in length
+/home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/security/FixedCurrentUser.java:6: error: FixedCurrentUser is not abstract and does not override abstract method role() in CurrentUser
+public class FixedCurrentUser implements CurrentUser {
+       ^
+4 errors
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler output below.
+  /home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/order/OrderController.java:49: error: method execute in class PayOrderUseCase cannot be applied to given types;
+  payOrderUseCase.execute(orderId, currentUser);
+                 ^
+    required: String
+    found:    String,CurrentUser
+    reason: actual and formal argument lists differ in length
+  /home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/config/OrderConfig.java:36: error: constructor PlaceOrderFromCartUseCase in class PlaceOrderFromCartUseCase cannot be applied to given types;
+          return new PlaceOrderFromCartUseCase(cartRepository, orderRepository, eventPublisher);
+                 ^
+    required: CartRepository,OrderRepository,ProductGateway,DomainEventPublisher
+    found:    CartRepository,OrderRepository,DomainEventPublisher
+    reason: actual and formal argument lists differ in length
+  /home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/application/security/FixedCurrentUser.java:6: error: FixedCurrentUser is not abstract and does not override abstract method role() in CurrentUser
+  public class FixedCurrentUser implements CurrentUser {
+         ^
+  /home/unitytech/UnityTech/Apps/ecomm-app-java/src/main/java/com/example/ecommerce/infrastructure/web/order/OrderController.java:39: error: incompatible types: void cannot be converted to OrderView
+          return placeOrderFromCartUseCase.execute(cartId, currentUser);
+                                                  ^
+  4 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to generate a Build Scan (powered by Develocity).
+
+BUILD FAILED in 655ms

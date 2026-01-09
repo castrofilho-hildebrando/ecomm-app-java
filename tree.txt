@@ -1,0 +1,131 @@
+src/
+├── checkstyle-12.3.0-all.jar
+├── main
+│   ├── java
+│   │   └── com
+│   │       └── example
+│   │           └── ecommerce
+│   │               ├── application
+│   │               │   ├── cart
+│   │               │   │   ├── AddItemToCartUseCase.java
+│   │               │   │   ├── CartItemView.java
+│   │               │   │   ├── CartOwnershipPolicy.java
+│   │               │   │   ├── CartView.java
+│   │               │   │   ├── ClearCartUseCase.java
+│   │               │   │   ├── GetCartUseCase.java
+│   │               │   │   ├── RemoveItemFromCartUseCase.java
+│   │               │   │   └── UpdateCartItemQuantityUseCase.java
+│   │               │   ├── event
+│   │               │   │   ├── DomainEventPublisher.java
+│   │               │   │   └── EventConsumer.java
+│   │               │   ├── order
+│   │               │   │   ├── GetOrderUseCase.java
+│   │               │   │   ├── OrderItemView.java
+│   │               │   │   ├── OrderView.java
+│   │               │   │   ├── PayOrderUseCase.java
+│   │               │   │   └── PlaceOrderFromCartUseCase.java
+│   │               │   └── security
+│   │               │       ├── CurrentUser.java
+│   │               │       └── FixedCurrentUser.java
+│   │               ├── domain
+│   │               │   ├── cart
+│   │               │   │   ├── CartId.java
+│   │               │   │   ├── CartItem.java
+│   │               │   │   ├── Cart.java
+│   │               │   │   ├── CartRepository.java
+│   │               │   │   └── ProductId.java
+│   │               │   ├── event
+│   │               │   │   └── DomainEvent.java
+│   │               │   ├── exception
+│   │               │   │   ├── CartItemNotFoundException.java
+│   │               │   │   ├── CartNotFoundException.java
+│   │               │   │   ├── DomainException.java
+│   │               │   │   ├── EmptyCartException.java
+│   │               │   │   ├── InvalidOrderStateException.java
+│   │               │   │   ├── InvalidQuantityException.java
+│   │               │   │   ├── OrderAlreadyPaidException.java
+│   │               │   │   ├── OrderNotFoundException.java
+│   │               │   │   ├── PaidOrderCannotBeCancelledException.java
+│   │               │   │   ├── ProductIdIsRequiredException.java
+│   │               │   │   ├── ProductNameIsRequiredException.java
+│   │               │   │   └── ProductPriceMustBePositiveException.java
+│   │               │   ├── order
+│   │               │   │   ├── AdminPolicy.java
+│   │               │   │   ├── event
+│   │               │   │   │   ├── OrderCreatedEvent.java
+│   │               │   │   │   └── OrderPaidEvent.java
+│   │               │   │   ├── OrderId.java
+│   │               │   │   ├── OrderItem.java
+│   │               │   │   ├── Order.java
+│   │               │   │   ├── OrderRepository.java
+│   │               │   │   └── OrderStatus.java
+│   │               │   ├── product
+│   │               │   │   ├── Product.java
+│   │               │   │   └── ProductRepository.java
+│   │               │   └── user
+│   │               │       ├── UserId.java
+│   │               │       ├── User.java
+│   │               │       ├── UserRepository.java
+│   │               │       └── UserRole.java
+│   │               ├── EcommerceApplication.java
+│   │               └── infrastructure
+│   │                   ├── config
+│   │                   │   ├── CartConfig.java
+│   │                   │   └── OrderConfig.java
+│   │                   ├── event
+│   │                   │   └── LoggingDomainEventPublisher.java
+│   │                   ├── persistence
+│   │                   │   ├── memory
+│   │                   │   │   ├── cart
+│   │                   │   │   │   └── InMemoryCartRepository.java
+│   │                   │   │   └── order
+│   │                   │   │       └── InMemoryOrderRepository.java
+│   │                   │   └── mongo
+│   │                   │       ├── cart
+│   │                   │       │   ├── CartDocument.java
+│   │                   │       │   ├── CartMapper.java
+│   │                   │       │   ├── MongoCartRepository.java
+│   │                   │       │   └── SpringDataCartRepository.java
+│   │                   │       └── order
+│   │                   │           ├── MongoOrderRepository.java
+│   │                   │           ├── OrderDocument.java
+│   │                   │           ├── OrderItemDocument.java
+│   │                   │           ├── OrderMapper.java
+│   │                   │           └── SpringDataOrderRepository.java
+│   │                   └── web
+│   │                       ├── ApiExceptionHandler.java
+│   │                       ├── cart
+│   │                       │   ├── AddItemRequest.java
+│   │                       │   ├── CartController.java
+│   │                       │   ├── CartItemResponse.java
+│   │                       │   ├── CartResponse.java
+│   │                       │   └── UpdateItemQuantityRequest.java
+│   │                       └── order
+│   │                           └── OrderController.java
+│   └── resources
+└── test
+    ├── java
+    │   └── com
+    │       └── example
+    │           └── ecommerce
+    │               ├── application
+    │               │   ├── cart
+    │               │   └── order
+    │               │       ├── fake
+    │               │       │   └── FakeDomainEventPublisher.java
+    │               │       ├── OrderUseCaseTest.java
+    │               │       ├── PayOrderUseCaseTest.java
+    │               │       └── PlaceOrderFromCartUseCaseTest.java
+    │               ├── domain
+    │               │   ├── cart
+    │               │   │   └── CartTest.java
+    │               │   └── order
+    │               │       ├── OrderControllerTest.java
+    │               │       └── OrderTest.java
+    │               └── infrastructure
+    │                   └── web
+    │                       └── cart
+    │                           └── CartControllerTest.java
+    └── resources
+
+49 directories, 80 files
