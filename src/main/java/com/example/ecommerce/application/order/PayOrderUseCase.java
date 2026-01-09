@@ -1,46 +1,44 @@
-// PayOrderUseCase.java
 package com.example.ecommerce.application.order;
 
+import com.example.ecommerce.application.event.DomainEventPublisher;
 import com.example.ecommerce.domain.order.Order;
 import com.example.ecommerce.domain.order.OrderId;
 import com.example.ecommerce.domain.order.OrderRepository;
-import com.example.ecommerce.infrastructure.web.order.OrderView;
-import com.example.ecommerce.infrastructure.web.order.OrderItemView;
 import com.example.ecommerce.domain.exception.OrderNotFoundException;
-import com.example.ecommerce.application.event.DomainEventPublisher;
-
-import java.util.List;
+import com.example.ecommerce.application.event.EventConsumer;
+import com.example.ecommerce.domain.event.DomainEvent;
 
 public class PayOrderUseCase {
 
     private final OrderRepository orderRepository;
-    private final DomainEventPublisher publisher;
+    private final DomainEventPublisher eventPublisher;
 
-    public PayOrderUseCase(OrderRepository orderRepository, DomainEventPublisher publisher) {
+    public PayOrderUseCase(
+            OrderRepository orderRepository,
+            DomainEventPublisher eventPublisher
+    ) {
         this.orderRepository = orderRepository;
-        this.publisher = publisher;
+        this.eventPublisher = eventPublisher;
     }
 
-    public OrderView execute(String orderId) {
-        Order order = orderRepository.findById(new OrderId(orderId))
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
+    public void execute(String orderId) {
+        OrderId id = new OrderId(orderId);
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(orderId));
 
         order.markAsPaid();
         orderRepository.save(order);
 
-        order.pullDomainEvents().forEach(publisher::publish);
+        EventConsumer consumer = new EventConsumer(eventPublisher);
 
-        List<OrderItemView> itemViews = order.getItems().stream()
-                .map(i -> new OrderItemView(
-                        i.getProductId().value(),
-                        i.getQuantity()
-                ))
-                .toList();
+        for (DomainEvent event : order.pullDomainEvents()) {
+            consumer.accept(event);
+        }
 
-        return new OrderView(
-                order.getId().value(),
-                order.getStatus().name(),
-                itemViews
-        );
+        for (DomainEvent event : aggregate.pullDomainEvents()) {
+            publisher.publish(event);
+        }
     }
 }

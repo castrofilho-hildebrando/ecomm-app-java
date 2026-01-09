@@ -4,8 +4,9 @@ import com.example.ecommerce.domain.cart.Cart;
 import com.example.ecommerce.domain.cart.CartId;
 import com.example.ecommerce.domain.cart.ProductId;
 import com.example.ecommerce.domain.cart.CartRepository;
-import com.example.ecommerce.domain.user.UserId;
 import com.example.ecommerce.domain.exception.CartNotFoundException;
+
+import com.example.ecommerce.domain.user.UserId;
 import com.example.ecommerce.application.security.CurrentUser;
 
 public class UpdateCartItemQuantityUseCase {
@@ -28,7 +29,9 @@ public class UpdateCartItemQuantityUseCase {
         Cart cart = cartRepository.findById(new CartId(cartId))
                 .orElseThrow(() -> new CartNotFoundException(cartId));
 
-        cart.validateNotEmpty();
+        if (cart.isEmpty()) {
+            throw new EmptyCartException(cartId);
+        }
 
         CartOwnershipPolicy.assertOwner(cart, uid);
 

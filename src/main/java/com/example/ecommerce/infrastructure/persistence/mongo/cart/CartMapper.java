@@ -1,21 +1,22 @@
-package com.example.ecommerce.infrastructure.persistence.mongo.cart;
+package com.example.ecommerce.infrastructure.mapper;
 
 import com.example.ecommerce.domain.cart.Cart;
 import com.example.ecommerce.domain.cart.CartId;
-import com.example.ecommerce.domain.cart.CartItem;
 import com.example.ecommerce.domain.cart.ProductId;
 import com.example.ecommerce.domain.user.UserId;
+import com.example.ecommerce.infrastructure.persistence.mongo.cart.CartDocument;
 
-import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.stream.Collectors;
 
 public class CartMapper {
 
     public static Cart toDomain(CartDocument doc) {
-        List<CartItem> items = doc.getItems().entrySet().stream()
-                .map(e -> new CartItem(new ProductId(e.getKey()), e.getValue()))
-                .toList();
+        Map<ProductId, Integer> items = doc.getItems().entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> new ProductId(e.getKey()),
+                        Map.Entry::getValue
+                ));
 
         return Cart.rehydrate(
                 new CartId(doc.getId()),
@@ -29,12 +30,12 @@ public class CartMapper {
         doc.setId(cart.getId().value());
         doc.setOwnerId(cart.getOwnerId().value());
 
-        Map<String, Integer> items = new HashMap<String, Integer>();
-        for (CartItem item : cart.getItems()) {
-            items.put(item.getProductId().value(), item.getQuantity());
-        }
-
-        doc.setItems(Map.copyOf(items));
+        cart.getItems().forEach(item ->
+                doc.getItems().put(
+                        item.getProductId().value(),
+                        item.getQuantity()
+                )
+        );
         return doc;
     }
 }

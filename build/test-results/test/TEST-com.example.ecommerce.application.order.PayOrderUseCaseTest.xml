@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.example.ecommerce.application.order.PayOrderUseCaseTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-01-08T20:12:14.963Z" hostname="unitytech-office" time="0.027">
-  <properties/>
-  <testcase name="shouldFailWhenOrderDoesNotExist()" classname="com.example.ecommerce.application.order.PayOrderUseCaseTest" time="0.011"/>
-  <testcase name="shouldPayOrderAndPublishEvent()" classname="com.example.ecommerce.application.order.PayOrderUseCaseTest" time="0.012"/>
-  <testcase name="shouldFailWhenOrderIsAlreadyPaid()" classname="com.example.ecommerce.application.order.PayOrderUseCaseTest" time="0.003"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

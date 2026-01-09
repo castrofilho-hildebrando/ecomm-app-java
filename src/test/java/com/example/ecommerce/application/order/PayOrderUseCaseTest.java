@@ -1,6 +1,9 @@
 package com.example.ecommerce.application.order;
 
-import com.example.ecommerce.domain.order.*;
+import com.example.ecommerce.domain.order.Order;
+import com.example.ecommerce.domain.order.OrderId;
+import com.example.ecommerce.domain.order.OrderItem;
+import com.example.ecommerce.domain.order.OrderStatus;
 import com.example.ecommerce.domain.cart.ProductId;
 import com.example.ecommerce.domain.order.event.OrderPaidEvent;
 import com.example.ecommerce.domain.exception.OrderNotFoundException;
@@ -9,7 +12,7 @@ import com.example.ecommerce.infrastructure.persistence.memory.order.InMemoryOrd
 
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,14 +23,15 @@ class PayOrderUseCaseTest {
         InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
         FakeDomainEventPublisher publisher = new FakeDomainEventPublisher();
 
-        Order order = new Order(new OrderId("order-1"));
-        order.addItem(new OrderItem(
-                new ProductId("product-1"),
-                BigDecimal.TEN,
-                2
-        ));
+        orderRepository.clear();
+
+        Order order = new Order(
+                new OrderId("order-1"),
+                List.of(new OrderItem(new ProductId("product-1"), 1))
+        );
 
         order.pullDomainEvents();
+
         orderRepository.save(order);
 
         PayOrderUseCase useCase =
@@ -40,6 +44,7 @@ class PayOrderUseCaseTest {
                 .orElseThrow();
 
         assertEquals(OrderStatus.PAID, persisted.getStatus());
+
         assertEquals(1, publisher.count());
         assertTrue(publisher.first() instanceof OrderPaidEvent);
     }
@@ -62,12 +67,12 @@ class PayOrderUseCaseTest {
     void shouldFailWhenOrderIsAlreadyPaid() {
         InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
 
-        Order order = new Order(new OrderId("order-1"));
-        order.addItem(new OrderItem(
-                new ProductId("product-1"),
-                BigDecimal.TEN,
-                2
-        ));
+        orderRepository.clear();
+
+        Order order = new Order(
+                new OrderId("order-1"),
+                List.of(new OrderItem(new ProductId("product-1"), 1))
+        );
         order.markAsPaid();
 
         orderRepository.save(order);

@@ -1,42 +1,45 @@
 package com.example.ecommerce.domain.cart;
+import com.example.ecommerce.application.security.CurrentUser;
 
 import com.example.ecommerce.domain.exception.CartItemNotFoundException;
 import com.example.ecommerce.domain.exception.InvalidQuantityException;
-import com.example.ecommerce.domain.user.UserId;
-
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
+import java.util.Map;
 
 class CartTest {
 
-    private final UserId userId = new UserId("user-1");
-
     @Test
     void shouldAddNewItemToCart() {
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        UserId uid = currentUser.id();
+        Cart cart = new Cart(new CartId("cart-1", currentUser));
 
         cart.addItem(new ProductId("product-1"), 2);
 
         assertEquals(1, cart.getItems().size());
+        CartItem item = cart.getItems().iterator().next();
+        assertEquals("product-1", item.getProductId().value());
+        assertEquals(2, item.getQuantity());
     }
 
     @Test
     void shouldIncreaseQuantityWhenAddingSameProduct() {
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        UserId uid = currentUser.id();
+        Cart cart = new Cart(new CartId("cart-1", currentUser));
 
         cart.addItem(new ProductId("product-1"), 2);
         cart.addItem(new ProductId("product-1"), 3);
 
-        CartItem item = cart.getItems().get(0);
+        CartItem item = cart.getItems().iterator().next();
         assertEquals(5, item.getQuantity());
     }
 
     @Test
     void shouldThrowExceptionWhenAddingInvalidQuantity() {
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        UserId uid = currentUser.id();
+        Cart cart = new Cart(new CartId("cart-1"), currentUser);
 
         assertThrows(
                 InvalidQuantityException.class,
@@ -46,19 +49,21 @@ class CartTest {
 
     @Test
     void shouldUpdateItemQuantity() {
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        UserId uid = currentUser.id();
+        Cart cart = new Cart(new CartId("cart-1"), currentUser);
         ProductId pid = new ProductId("product-1");
 
         cart.addItem(pid, 2);
         cart.updateItemQuantity(pid, 5);
 
-        CartItem item = cart.getItems().get(0);
+        CartItem item = cart.getItems().iterator().next();
         assertEquals(5, item.getQuantity());
     }
 
     @Test
     void shouldThrowWhenUpdatingNonExistingItem() {
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        UserId uid = currentUser.id();
+        Cart cart = new Cart(new CartId("cart-1"), currentUser);
 
         assertThrows(
                 CartItemNotFoundException.class,
@@ -68,18 +73,20 @@ class CartTest {
 
     @Test
     void shouldRemoveItem() {
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        UserId uid = currentUser.id();
+        Cart cart = new Cart(new CartId("cart-1"), currentUser);
         ProductId pid = new ProductId("product-1");
 
         cart.addItem(pid, 2);
         cart.removeItem(pid);
 
-        assertTrue(cart.isEmpty());
+        assertTrue(cart.getItems().isEmpty());
     }
 
     @Test
     void shouldThrowWhenRemovingNonExistingItem() {
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        UserId uid = currentUser.id();
+        Cart cart = new Cart(new CartId("cart-1"), currentUser);
 
         assertThrows(
                 CartItemNotFoundException.class,
@@ -89,7 +96,8 @@ class CartTest {
 
     @Test
     void shouldClearCart() {
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        UserId uid = currentUser.id();
+        Cart cart = new Cart(new CartId("cart-1"), currentUser);
 
         cart.addItem(new ProductId("product-1"), 2);
         cart.addItem(new ProductId("product-2"), 1);
@@ -103,12 +111,13 @@ class CartTest {
     void shouldRehydrateCartWithoutApplyingBusinessRules() {
         CartId cartId = new CartId("cart-1");
 
-        List<CartItem> items = List.of(
-                new CartItem(new ProductId("product-1"), 10),
-                new CartItem(new ProductId("product-2"), 5)
+        Map<ProductId, Integer> persistedItems = Map.of(
+                new ProductId("product-1"), 10,
+                new ProductId("product-2"), 5
         );
 
-        Cart cart = Cart.rehydrate(cartId, userId, items);
+        UserId uid = currentUser.id();
+        Cart cart = Cart.rehydrate(cartId, userId, persistedItems);
 
         assertEquals(2, cart.getItems().size());
     }

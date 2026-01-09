@@ -1,21 +1,17 @@
 package com.example.ecommerce.domain.order;
 
-import com.example.ecommerce.domain.cart.ProductId;
-import com.example.ecommerce.domain.order.event.OrderCreatedEvent;
-import com.example.ecommerce.domain.order.event.OrderPaidEvent;
-import com.example.ecommerce.domain.exception.OrderAlreadyPaidException;
+import com.example.ecommerce.domain.event.DomainEvent;
 
-import org.junit.jupiter.api.Test;
+import java.util.List;
 
-import java.math.BigDecimal;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-class OrderTest {
+public OrderTest {
 
     @Test
     void shouldRegisterOrderCreatedEvent() {
-        Order order = new Order(new OrderId("order-1"));
+        Order order = new Order(
+                new OrderId("order-1"),
+                List.of(new OrderItem(new ProductId("product-1"), 1))
+        );
 
         var events = order.pullDomainEvents();
 
@@ -25,14 +21,13 @@ class OrderTest {
 
     @Test
     void shouldRegisterOrderPaidEvent() {
-        Order order = new Order(new OrderId("order-1"));
-        order.addItem(new OrderItem(
-                new ProductId("product-1"),
-                BigDecimal.TEN,
-                1
-        ));
+        Order order = new Order(
+                new OrderId("order-1"),
+                List.of(new OrderItem(new ProductId("product-1"), 1))
+        );
 
-        order.pullDomainEvents(); // clear OrderCreated
+        order.pullDomainEvents(); // limpa OrderCreated
+
         order.markAsPaid();
 
         var events = order.pullDomainEvents();
@@ -43,14 +38,12 @@ class OrderTest {
 
     @Test
     void shouldThrowWhenPayingAlreadyPaidOrder() {
-        Order order = new Order(new OrderId("order-1"));
-        order.addItem(new OrderItem(
-                new ProductId("product-1"),
-                BigDecimal.TEN,
-                1
-        ));
+        Order order = new Order(
+                new OrderId("order-1"),
+                List.of(new OrderItem(new ProductId("product-1"), 1))
+        );
 
-        order.pullDomainEvents();
+        order.pullDomainEvents(); // clear created
         order.markAsPaid();
 
         assertThrows(

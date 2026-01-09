@@ -1,10 +1,6 @@
 package com.example.ecommerce.infrastructure.config;
 
 import com.example.ecommerce.application.cart.AddItemToCartUseCase;
-import com.example.ecommerce.application.cart.RemoveItemFromCartUseCase;
-import com.example.ecommerce.application.cart.UpdateCartItemQuantityUseCase;
-import com.example.ecommerce.application.cart.GetCartUseCase;
-import com.example.ecommerce.application.cart.ClearCartUseCase;
 import com.example.ecommerce.domain.cart.CartRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

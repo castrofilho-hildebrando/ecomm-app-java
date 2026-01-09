@@ -1,103 +1,103 @@
 package com.example.ecommerce.infrastructure.web.cart;
 
-import com.example.ecommerce.application.cart.AddItemToCartUseCase;
-import com.example.ecommerce.application.cart.UpdateCartItemQuantityUseCase;
-import com.example.ecommerce.application.cart.RemoveItemFromCartUseCase;
-import com.example.ecommerce.application.cart.ClearCartUseCase;
-import com.example.ecommerce.application.cart.GetCartUseCase;
-import com.example.ecommerce.application.cart.CartView;
+import com.example.ecommerce.application.cart.*;
 import com.example.ecommerce.application.security.CurrentUser;
-import com.example.ecommerce.infrastructure.security.SecurityContextCurrentUser;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/carts")
 public class CartController {
 
     private final AddItemToCartUseCase addItemToCartUseCase;
-    private final UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase;
     private final RemoveItemFromCartUseCase removeItemFromCartUseCase;
+    private final UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase;
     private final ClearCartUseCase clearCartUseCase;
     private final GetCartUseCase getCartUseCase;
 
     public CartController(
             AddItemToCartUseCase addItemToCartUseCase,
-            UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase,
             RemoveItemFromCartUseCase removeItemFromCartUseCase,
+            UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase,
             ClearCartUseCase clearCartUseCase,
             GetCartUseCase getCartUseCase
     ) {
         this.addItemToCartUseCase = addItemToCartUseCase;
-        this.updateCartItemQuantityUseCase = updateCartItemQuantityUseCase;
         this.removeItemFromCartUseCase = removeItemFromCartUseCase;
+        this.updateCartItemQuantityUseCase = updateCartItemQuantityUseCase;
         this.clearCartUseCase = clearCartUseCase;
         this.getCartUseCase = getCartUseCase;
     }
 
     @PostMapping("/{cartId}/items")
-    @ResponseStatus(HttpStatus.CREATED)
-    public void addItem(
+    public CartResponse addItem(
             @PathVariable String cartId,
+            Spring userId,
             @RequestBody AddItemRequest request
     ) {
-        CurrentUser currentUser = currentUser();
-        addItemToCartUseCase.execute(
+        CurrentUser currentUser = new FixedCurrentUser("user-1");
+        CartView view = addItemToCartUseCase.execute(
                 cartId,
                 currentUser,
                 request.productId(),
                 request.quantity()
         );
+
+        return CartResponse.from(view);
     }
 
     @PutMapping("/{cartId}/items/{productId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateItemQuantity(
+    public CartResponse updateItemQuantity(
             @PathVariable String cartId,
             @PathVariable String productId,
             @RequestBody UpdateItemQuantityRequest request
     ) {
-        CurrentUser currentUser = currentUser();
-        updateCartItemQuantityUseCase.execute(
+        CurrentUser currentUser = new FixedCurrentUser("user-1");
+        CartView view = updateCartItemQuantityUseCase.execute(
                 cartId,
                 currentUser,
                 productId,
                 request.quantity()
         );
+
+        return CartResponse.from(view);
     }
 
     @DeleteMapping("/{cartId}/items/{productId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeItem(
+    public CartResponse removeItem(
             @PathVariable String cartId,
             @PathVariable String productId
     ) {
-        CurrentUser currentUser = currentUser();
-        removeItemFromCartUseCase.execute(
+        CurrentUser currentUser = new FixedCurrentUser("user-1");
+        CartView view = removeItemFromCartUseCase.execute(
                 cartId,
                 currentUser,
                 productId
         );
+        return CartResponse.from(view);
     }
 
     @DeleteMapping("/{cartId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void clearCart(@PathVariable String cartId) {
-        CurrentUser currentUser = currentUser();
+        CurrentUser currentUser = new FixedCurrentUser("user-1");
         clearCartUseCase.execute(cartId, currentUser);
     }
 
     @GetMapping("/{cartId}")
-    public CartView getCart(@PathVariable String cartId) {
-        CurrentUser currentUser = currentUser();
-        return getCartUseCase.execute(cartId, currentUser);
-    }
+    public CartResponse getCart(@PathVariable String cartId) {
+        CurrentUser currentUser = new FixedCurrentUser("user-1");
+        CartView cartView = getCartUseCase.execute(cartId, currentUser);
 
-    private CurrentUser currentUser() {
-        return new SecurityContextCurrentUser(
-                SecurityContextHolder.getContext().getAuthentication()
-        );
+        List<CartItemResponse> items = cartView.items().stream()
+                .map(item -> new CartItemResponse(
+                        item.productId(),
+                        item.quantity()
+                ))
+                .toList();
+
+        return new CartResponse(cartView.cartId(), items);
     }
 }

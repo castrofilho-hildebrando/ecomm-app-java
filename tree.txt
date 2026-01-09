@@ -41,16 +41,13 @@ src/
 │   │               │   │   ├── CartNotFoundException.java
 │   │               │   │   ├── DomainException.java
 │   │               │   │   ├── EmptyCartException.java
-│   │               │   │   ├── InvalidOrderStateException.java
 │   │               │   │   ├── InvalidQuantityException.java
 │   │               │   │   ├── OrderAlreadyPaidException.java
 │   │               │   │   ├── OrderNotFoundException.java
-│   │               │   │   ├── PaidOrderCannotBeCancelledException.java
 │   │               │   │   ├── ProductIdIsRequiredException.java
 │   │               │   │   ├── ProductNameIsRequiredException.java
 │   │               │   │   └── ProductPriceMustBePositiveException.java
 │   │               │   ├── order
-│   │               │   │   ├── AdminPolicy.java
 │   │               │   │   ├── event
 │   │               │   │   │   ├── OrderCreatedEvent.java
 │   │               │   │   │   └── OrderPaidEvent.java
@@ -128,4 +125,4 @@ src/
     │                           └── CartControllerTest.java
     └── resources
 
-49 directories, 80 files
+49 directories, 77 files
