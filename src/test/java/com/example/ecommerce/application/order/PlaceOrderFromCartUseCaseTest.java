@@ -16,8 +16,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class PlaceOrderFromCartUseCaseTest {
 
@@ -25,22 +23,17 @@ class PlaceOrderFromCartUseCaseTest {
     private OrderRepository orderRepository;
     private PlaceOrderFromCartUseCase useCase;
 
-    // Inside PlaceOrderFromCartUseCaseTest.java
     @BeforeEach
     void setUp() {
-        // 2. INICIALIZAR as instâncias
         this.cartRepository = new InMemoryCartRepository();
         this.orderRepository = new InMemoryOrderRepository();
-        
-        // O UseCase precisa dos repositórios e de um publicador de eventos (pode ser um lambda vazio)
+
         this.useCase = new PlaceOrderFromCartUseCase(
-            cartRepository, 
-            orderRepository, 
-            event -> {} 
+            cartRepository,
+            orderRepository,
+            event -> {}
         );
     }
-
-    // File: src/test/java/com/example/ecommerce/application/order/PlaceOrderFromCartUseCaseTest.java
 
     @Test
     void shouldPlaceOrderFromCartAndClearCart() {
@@ -58,23 +51,20 @@ class PlaceOrderFromCartUseCaseTest {
 
         FakeDomainEventPublisher publisher = new FakeDomainEventPublisher();
 
-        PlaceOrderFromCartUseCase useCase =
-                new PlaceOrderFromCartUseCase(
-                        cartRepository,
-                        orderRepository,
-                        publisher
-                );
-               
-        CurrentUser currentUser = mock(CurrentUser.class);
-        when(currentUser.id()).thenReturn(userId);
+        PlaceOrderFromCartUseCase useCase = new PlaceOrderFromCartUseCase(
+                cartRepository,
+                orderRepository,
+                publisher
+        );
+
+        CurrentUser currentUser = new FixedCurrentUser(userId.value());
 
         useCase.execute("cart-1", currentUser);
 
         assertEquals(1, publisher.count());
         assertTrue(publisher.first() instanceof OrderCreatedEvent);
 
-        OrderCreatedEvent event =
-                (OrderCreatedEvent) publisher.first();
+        OrderCreatedEvent event = (OrderCreatedEvent) publisher.first();
 
         Order order = orderRepository
                 .findById(event.orderId())
@@ -93,10 +83,9 @@ class PlaceOrderFromCartUseCaseTest {
     void shouldThrowWhenCartIsEmpty() {
         String cartId = "cart-empty";
         UserId userId = new UserId("user-1");
-        
-        // FIX: Você deve salvar o carrinho no repositório mockado/fake primeiro
+
         cartRepository.save(new Cart(new CartId(cartId), userId));
-        
+
         CurrentUser currentUser = new FixedCurrentUser(userId.value());
 
         assertThrows(EmptyCartException.class, () -> {

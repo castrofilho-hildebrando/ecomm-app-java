@@ -22,6 +22,11 @@ dependencies {
     implementation libs.springboot.starter.web
     implementation libs.springboot.starter.security
     implementation libs.springboot.starter.data.mongodb
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    implementation libs.mapstruct
+    implementation libs.springboot.starter.validation
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    annotationProcessor libs.mapstruct.processor
     testImplementation libs.springboot.starter.test
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation libs.junit.jupiter

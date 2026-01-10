@@ -1,9 +1,10 @@
 package com.example.ecommerce.infrastructure.web.order;
 
-import com.example.ecommerce.application.order.*; // Isso importa o OrderView correto
+import com.example.ecommerce.application.order.GetOrderUseCase;
+import com.example.ecommerce.application.order.PayOrderUseCase;
+import com.example.ecommerce.application.order.PlaceOrderFromCartUseCase;
 import com.example.ecommerce.application.security.CurrentUser;
-import com.example.ecommerce.infrastructure.security.SecurityContextCurrentUser;
-import org.springframework.security.core.Authentication;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,36 +12,49 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/orders")
 public class OrderController {
 
-    private final PayOrderUseCase payOrderUseCase;
-    private final GetOrderUseCase getOrderUseCase;
-    private final PlaceOrderFromCartUseCase placeOrderFromCartUseCase;
+    private final PlaceOrderFromCartUseCase placeOrderFromCart;
+    private final GetOrderUseCase getOrder;
+    private final PayOrderUseCase payOrder;
 
     public OrderController(
-            PayOrderUseCase payOrderUseCase,
-            GetOrderUseCase getOrderUseCase,
-            PlaceOrderFromCartUseCase placeOrderFromCartUseCase
+            PlaceOrderFromCartUseCase placeOrderFromCart,
+            GetOrderUseCase getOrder,
+            PayOrderUseCase payOrder
     ) {
-        this.payOrderUseCase = payOrderUseCase;
-        this.getOrderUseCase = getOrderUseCase;
-        this.placeOrderFromCartUseCase = placeOrderFromCartUseCase;
+        this.placeOrderFromCart = placeOrderFromCart;
+        this.getOrder = getOrder;
+        this.payOrder = payOrder;
     }
 
     @PostMapping("/from-cart/{cartId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderView placeFromCart(@PathVariable String cartId, Authentication authentication) {
-        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
-        return placeOrderFromCartUseCase.execute(cartId, currentUser);
+    public OrderResponse placeFromCart(
+            @PathVariable String cartId,
+            CurrentUser currentUser
+    ) {
+        return OrderResponse.from(
+                placeOrderFromCart.execute(cartId, currentUser)
+        );
     }
 
     @GetMapping("/{orderId}")
-    public OrderView get(@PathVariable String orderId, Authentication authentication) {
-        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
-        return getOrderUseCase.execute(orderId, currentUser);
+    public OrderResponse get(
+            @PathVariable String orderId,
+            CurrentUser currentUser
+    ) {
+        return OrderResponse.from(
+                getOrder.execute(orderId, currentUser)
+        );
     }
 
     @PostMapping("/{orderId}/pay")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void pay(@PathVariable String orderId) {
-        payOrderUseCase.execute(orderId);
+    public OrderResponse pay(
+            @PathVariable String orderId,
+            @RequestHeader("Idempotency-Key") @NotBlank String idempotencyKey,
+            CurrentUser currentUser
+    ) {
+        return OrderResponse.from(
+                payOrder.execute(orderId, currentUser, idempotencyKey)
+        );
     }
 }

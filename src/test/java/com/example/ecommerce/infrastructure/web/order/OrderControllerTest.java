@@ -3,7 +3,6 @@ package com.example.ecommerce.infrastructure.web.order;
 import com.example.ecommerce.application.order.*;
 import com.example.ecommerce.domain.order.*;
 import com.example.ecommerce.domain.cart.CartRepository;
-import com.example.ecommerce.domain.cart.ProductId;
 import com.example.ecommerce.infrastructure.persistence.memory.cart.InMemoryCartRepository;
 import com.example.ecommerce.infrastructure.persistence.memory.order.InMemoryOrderRepository;
 import com.example.ecommerce.infrastructure.web.ApiExceptionHandler;
@@ -34,30 +33,28 @@ class OrderControllerTest {
     @Test
     void shouldNotAllowPayingAlreadyPaidOrder() throws Exception {
         OrderId orderId = new OrderId("order-1");
-        Order order = new Order(orderId, List.of(new OrderItem(new ProductId("p1"), 1)));
+        Order order = new Order(orderId, List.of(new OrderItem(new OrderProductId("p1"), 1)));
         order.markAsPaid();
         orderRepository.save(order);
 
-        // CORREÇÃO 1: Adicionar csrf()
-        // CORREÇÃO 2: Esperar status 409 (Conflict) em vez de 400
         mockMvc.perform(post("/orders/{orderId}/pay", orderId.value())
+                .header("Idempotency-Key", "key-123")
                 .with(user("user-1"))
                 .with(csrf()))
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldReturnOrderById() throws Exception {
         Order order = new Order(
                 new OrderId("order-1"),
-                List.of(new OrderItem(new ProductId("product-1"), 2))
+                List.of(new OrderItem(new OrderProductId("product-1"), 2))
         );
         orderRepository.save(order);
 
         mockMvc.perform(get("/orders/order-1")
                 .with(user("user-1")))
                 .andExpect(status().isOk())
-                // CORREÇÃO 3: O campo no JSON é 'id', conforme OrderView
                 .andExpect(jsonPath("$.id").value("order-1"));
     }
 
@@ -73,7 +70,13 @@ class OrderControllerTest {
         @Bean
         public GetOrderUseCase getOrderUseCase(OrderRepository repo) { return new GetOrderUseCase(repo); }
         @Bean
-        public PayOrderUseCase payOrderUseCase(OrderRepository repo) { return new PayOrderUseCase(repo, event -> {}); }
+        public PayOrderUseCase payOrderUseCase(OrderRepository repo) {
+            return new PayOrderUseCase(
+                repo,
+                new InMemoryIdempotencyRepository(),
+                event -> {}
+            );
+        }
         @Bean
         public ApiExceptionHandler apiExceptionHandler() { return new ApiExceptionHandler(); }
     }

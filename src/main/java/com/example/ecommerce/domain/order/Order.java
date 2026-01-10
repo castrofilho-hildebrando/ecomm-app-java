@@ -5,42 +5,58 @@ import com.example.ecommerce.domain.order.event.OrderCreatedEvent;
 import com.example.ecommerce.domain.order.event.OrderPaidEvent;
 import com.example.ecommerce.domain.exception.OrderAlreadyPaidException;
 import com.example.ecommerce.domain.exception.PaidOrderCannotBeCancelledException;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
+@Document(collection = "orders")
 public class Order {
 
-    private final OrderId id;
-    private final List<OrderItem> items;
-    private final List<DomainEvent> domainEvents = new ArrayList<>();
+    @Id
+    private String id;
+
+    private List<OrderItem> items;
+
     private OrderStatus status;
 
-    public Order(OrderId id, List<OrderItem> items) {
-        this.id = Objects.requireNonNull(id);
-        this.items = List.copyOf(items);
-        this.status = OrderStatus.CREATED;
+    @Version
+    private Long version;
 
-         domainEvents.add(new OrderCreatedEvent(id));
+    @Transient
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
+
+    /* ---------- Constructors ---------- */
+
+    protected Order() {
+        // Required by Spring Data
     }
 
-    private Order(
-        OrderId id,
-        List<OrderItem> items,
-        OrderStatus status
-    ) {
+    public Order(OrderId id, List<OrderItem> items) {
+        this.id = Objects.requireNonNull(id).value();
+        this.items = List.copyOf(items);
+        this.status = OrderStatus.CREATED;
+        domainEvents.add(new OrderCreatedEvent(id));
+    }
+
+    private Order(String id, List<OrderItem> items, OrderStatus status) {
         this.id = id;
         this.items = List.copyOf(items);
         this.status = status;
     }
 
+    /* ---------- Domain API ---------- */
+
     public OrderId getId() {
-        return id;
+        return new OrderId(id);
     }
 
     public List<OrderItem> getItems() {
-        return items;
+        return List.copyOf(items);
     }
 
     public OrderStatus getStatus() {
@@ -49,15 +65,15 @@ public class Order {
 
     public void markAsPaid() {
         if (status != OrderStatus.CREATED) {
-            throw new OrderAlreadyPaidException(id);
+            throw new OrderAlreadyPaidException(getId());
         }
         this.status = OrderStatus.PAID;
-        domainEvents.add(new OrderPaidEvent(id));
+        domainEvents.add(new OrderPaidEvent(getId()));
     }
 
     public void cancel() {
         if (status == OrderStatus.PAID) {
-            throw new PaidOrderCannotBeCancelledException(id);
+            throw new PaidOrderCannotBeCancelledException(getId());
         }
         this.status = OrderStatus.CANCELLED;
     }
@@ -68,11 +84,13 @@ public class Order {
         return events;
     }
 
+    /* ---------- Rehydration ---------- */
+
     public static Order rehydrate(
-        OrderId id,
-        List<OrderItem> items,
-        OrderStatus status
+            OrderId id,
+            List<OrderItem> items,
+            OrderStatus status
     ) {
-        return new Order(id, items, status);
+        return new Order(id.value(), items, status);
     }
 }

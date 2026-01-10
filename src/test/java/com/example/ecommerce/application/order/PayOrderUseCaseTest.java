@@ -1,10 +1,11 @@
 package com.example.ecommerce.application.order;
 
+import com.example.ecommerce.application.security.FixedCurrentUser;
 import com.example.ecommerce.domain.order.Order;
 import com.example.ecommerce.domain.order.OrderId;
 import com.example.ecommerce.domain.order.OrderItem;
 import com.example.ecommerce.domain.order.OrderStatus;
-import com.example.ecommerce.domain.cart.ProductId;
+import com.example.ecommerce.domain.order.OrderProductId;
 import com.example.ecommerce.domain.order.event.OrderPaidEvent;
 import com.example.ecommerce.domain.exception.OrderNotFoundException;
 import com.example.ecommerce.domain.exception.OrderAlreadyPaidException;
@@ -27,17 +28,24 @@ class PayOrderUseCaseTest {
 
         Order order = new Order(
                 new OrderId("order-1"),
-                List.of(new OrderItem(new ProductId("product-1"), 1))
+                List.of(new OrderItem(new OrderProductId("product-1"), 1))
         );
 
         order.pullDomainEvents();
 
         orderRepository.save(order);
 
-        PayOrderUseCase useCase =
-                new PayOrderUseCase(orderRepository, publisher);
+        PayOrderUseCase useCase = new PayOrderUseCase(
+                orderRepository,
+                new InMemoryIdempotencyRepository(),
+                publisher
+        );
 
-        useCase.execute("order-1");
+        useCase.execute(
+                "order-1",
+                new FixedCurrentUser("user-1"),
+                "idem-key-1"
+        );
 
         Order persisted = orderRepository
                 .findById(new OrderId("order-1"))
@@ -51,15 +59,19 @@ class PayOrderUseCaseTest {
 
     @Test
     void shouldFailWhenOrderDoesNotExist() {
-        PayOrderUseCase useCase =
-                new PayOrderUseCase(
-                        new InMemoryOrderRepository(),
-                        event -> {}
-                );
+        PayOrderUseCase useCase = new PayOrderUseCase(
+                new InMemoryOrderRepository(),
+                new InMemoryIdempotencyRepository(),
+                event -> {}
+        );
 
         assertThrows(
                 OrderNotFoundException.class,
-                () -> useCase.execute("missing-order")
+                () -> useCase.execute(
+                        "missing-order",
+                        new FixedCurrentUser("user-1"),
+                        "idem-key-1"
+                )
         );
     }
 
@@ -71,18 +83,25 @@ class PayOrderUseCaseTest {
 
         Order order = new Order(
                 new OrderId("order-1"),
-                List.of(new OrderItem(new ProductId("product-1"), 1))
+                List.of(new OrderItem(new OrderProductId("product-1"), 1))
         );
         order.markAsPaid();
 
         orderRepository.save(order);
 
-        PayOrderUseCase useCase =
-                new PayOrderUseCase(orderRepository, event -> {});
+        PayOrderUseCase useCase = new PayOrderUseCase(
+                orderRepository,
+                new InMemoryIdempotencyRepository(),
+                event -> {}
+        );
 
         assertThrows(
                 OrderAlreadyPaidException.class,
-                () -> useCase.execute("order-1")
+                () -> useCase.execute(
+                        "order-1",
+                        new FixedCurrentUser("user-1"),
+                        "idem-key-2"
+                )
         );
     }
 }

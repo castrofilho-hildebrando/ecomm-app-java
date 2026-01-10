@@ -2,99 +2,94 @@ package com.example.ecommerce.infrastructure.web.cart;
 
 import com.example.ecommerce.application.cart.*;
 import com.example.ecommerce.application.security.CurrentUser;
-import com.example.ecommerce.infrastructure.security.SecurityContextCurrentUser; // Added
-import org.springframework.security.core.Authentication; // Added
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/carts")
 public class CartController {
 
-    private final AddItemToCartUseCase addItemToCartUseCase;
-    private final RemoveItemFromCartUseCase removeItemFromCartUseCase;
-    private final UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase;
-    private final ClearCartUseCase clearCartUseCase;
-    private final GetCartUseCase getCartUseCase;
+    private final AddItemToCartUseCase addItem;
+    private final UpdateCartItemQuantityUseCase updateItem;
+    private final RemoveItemFromCartUseCase removeItem;
+    private final ClearCartUseCase clearCart;
+    private final GetCartUseCase getCart;
 
     public CartController(
-            AddItemToCartUseCase addItemToCartUseCase,
-            RemoveItemFromCartUseCase removeItemFromCartUseCase,
-            UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase,
-            ClearCartUseCase clearCartUseCase,
-            GetCartUseCase getCartUseCase
+            AddItemToCartUseCase addItem,
+            UpdateCartItemQuantityUseCase updateItem,
+            RemoveItemFromCartUseCase removeItem,
+            ClearCartUseCase clearCart,
+            GetCartUseCase getCart
     ) {
-        this.addItemToCartUseCase = addItemToCartUseCase;
-        this.removeItemFromCartUseCase = removeItemFromCartUseCase;
-        this.updateCartItemQuantityUseCase = updateCartItemQuantityUseCase;
-        this.clearCartUseCase = clearCartUseCase;
-        this.getCartUseCase = getCartUseCase;
+        this.addItem = addItem;
+        this.updateItem = updateItem;
+        this.removeItem = removeItem;
+        this.clearCart = clearCart;
+        this.getCart = getCart;
+    }
+
+    @GetMapping("/{cartId}")
+    public CartResponse get(
+            @PathVariable String cartId,
+            CurrentUser currentUser
+    ) {
+        return CartResponse.from(
+                getCart.execute(cartId, currentUser)
+        );
     }
 
     @PostMapping("/{cartId}/items")
-    public CartResponse addItem(
-            @PathVariable String cartId,
-            Authentication authentication, // FIX: Replaced 'Spring userId' with valid Authentication
-            @RequestBody AddItemRequest request
+    public CartResponse add(
+        @PathVariable String cartId,
+        @Valid @RequestBody AddItemRequest request,
+        CurrentUser currentUser
     ) {
-        // Use the security context to identify the user instead of hardcoding "user-1"
-        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
-
-        CartView view = addItemToCartUseCase.execute(
-                cartId,
-                currentUser,
-                request.productId(),
-                request.quantity()
+        return CartResponse.from(
+                addItem.execute(
+                        cartId,
+                        currentUser,
+                        request.productId(),
+                        request.quantity()
+                )
         );
-        return CartResponse.from(view);
     }
 
     @PutMapping("/{cartId}/items/{productId}")
-    public CartResponse updateItemQuantity(
+    public CartResponse update(
             @PathVariable String cartId,
             @PathVariable String productId,
-            Authentication authentication, // FIX: Injected security context
-            @RequestBody UpdateItemQuantityRequest request
+            @Valid @RequestBody UpdateItemQuantityRequest request,
+            CurrentUser currentUser
     ) {
-        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
-        CartView view = updateCartItemQuantityUseCase.execute(
-                cartId,
-                currentUser,
-                productId,
-                request.quantity()
+        return CartResponse.from(
+                updateItem.execute(
+                        cartId,
+                        currentUser,
+                        productId,
+                        request.quantity()
+                )
         );
-        return CartResponse.from(view);
     }
 
     @DeleteMapping("/{cartId}/items/{productId}")
-    public CartResponse removeItem(
+    public CartResponse removeItemFromCart(
             @PathVariable String cartId,
             @PathVariable String productId,
-            Authentication authentication // FIX: Injected security context
+            CurrentUser currentUser
     ) {
-        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
-        CartView view = removeItemFromCartUseCase.execute(
-                cartId,
-                currentUser,
-                productId
+        return CartResponse.from(
+                removeItem.execute(cartId, currentUser, productId)
         );
-        return CartResponse.from(view);
     }
 
     @DeleteMapping("/{cartId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void clearCart(@PathVariable String cartId, Authentication authentication) {
-        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
-        clearCartUseCase.execute(cartId, currentUser);
-    }
-
-    @GetMapping("/{cartId}")
-    public CartResponse getCart(@PathVariable String cartId, Authentication authentication) {
-        CurrentUser currentUser = new SecurityContextCurrentUser(authentication);
-        CartView cartView = getCartUseCase.execute(cartId, currentUser);
-
-        return CartResponse.from(cartView);
+    public void clear(
+            @PathVariable String cartId,
+            CurrentUser currentUser
+    ) {
+        clearCart.execute(cartId, currentUser);
     }
 }

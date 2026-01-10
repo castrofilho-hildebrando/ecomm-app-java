@@ -3,7 +3,6 @@ package com.example.ecommerce.infrastructure.persistence.mongo.order;
 import com.example.ecommerce.domain.order.Order;
 import com.example.ecommerce.domain.order.OrderId;
 import com.example.ecommerce.domain.order.OrderRepository;
-import com.example.ecommerce.infrastructure.mapper.OrderMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -11,25 +10,24 @@ import java.util.Optional;
 @Repository
 public class MongoOrderRepository implements OrderRepository {
 
-    private final SpringDataOrderRepository springDataOrderRepository;
+    private final SpringDataOrderRepository repository;
 
-    public MongoOrderRepository(SpringDataOrderRepository springDataOrderRepository) {
-        this.springDataOrderRepository = springDataOrderRepository;
+    public MongoOrderRepository(SpringDataOrderRepository repository) {
+        this.repository = repository;
     }
 
     @Override
     public Optional<Order> findById(OrderId id) {
-        return springDataOrderRepository.findById(id.value())
-                .map(OrderMapper::toDomain);
+        return repository.findById(id.value());
     }
 
     @Override
     public void save(Order order) {
-        springDataOrderRepository.save(OrderMapper.toDocument(order));
+        repository.save(order);
     }
 
     @Override
     public void delete(OrderId id) {
-        springDataOrderRepository.deleteById(id.value());
+        repository.deleteById(id.value());
     }
 }

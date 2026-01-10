@@ -1,5 +1,4 @@
 package com.example.ecommerce.domain.cart;
-import com.example.ecommerce.application.security.CurrentUser;
 
 import com.example.ecommerce.domain.exception.CartItemNotFoundException;
 import com.example.ecommerce.domain.exception.InvalidQuantityException;
@@ -9,38 +8,41 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Map;
-
 class CartTest {
 
     @Test
-    void shouldRehydrateCart() {
+    void shouldAddItemToCart() {
+        UserId userId = new UserId("user-1");
         CartId cartId = new CartId("cart-1");
-        UserId userId = new UserId("user-1"); // FIX: Define missing userId
-        Map<ProductId, Integer> persistedItems = Map.of(new ProductId("p1"), 1);
+        Cart cart = new Cart(cartId, userId);
+        ProductId productId = new ProductId("product-1");
 
-        // FIX: Pass userId to the rehydrate method
-        Cart cart = Cart.rehydrate(cartId, userId, persistedItems);
-        
-        assertEquals(userId, cart.getOwnerId());
+        cart.addItem(productId, 2);
+
+        assertEquals(1, cart.getItems().size());
+        CartItem item = cart.getItems().get(productId);
+        assertEquals(2, item.getQuantity());
     }
 
     @Test
     void shouldIncreaseQuantityWhenAddingSameProduct() {
         UserId userId = new UserId("user-1");
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        CartId cartId = new CartId("cart-1");
+        Cart cart = new Cart(cartId, userId);
+        ProductId productId = new ProductId("product-1");
 
-        cart.addItem(new ProductId("product-1"), 2);
-        cart.addItem(new ProductId("product-1"), 3);
+        cart.addItem(productId, 2);
+        cart.addItem(productId, 3);
 
-        CartItem item = cart.getItems().iterator().next();
+        CartItem item = cart.getItems().get(productId);
         assertEquals(5, item.getQuantity());
     }
 
     @Test
     void shouldThrowExceptionWhenAddingInvalidQuantity() {
         UserId userId = new UserId("user-1");
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        CartId cartId = new CartId("cart-1");
+        Cart cart = new Cart(cartId, userId);
 
         assertThrows(
                 InvalidQuantityException.class,
@@ -51,20 +53,35 @@ class CartTest {
     @Test
     void shouldUpdateItemQuantity() {
         UserId userId = new UserId("user-1");
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        CartId cartId = new CartId("cart-1");
+        Cart cart = new Cart(cartId, userId);
         ProductId pid = new ProductId("product-1");
 
         cart.addItem(pid, 2);
         cart.updateItemQuantity(pid, 5);
 
-        CartItem item = cart.getItems().iterator().next();
+        CartItem item = cart.getItems().get(pid);
         assertEquals(5, item.getQuantity());
+    }
+
+    @Test
+    void shouldRemoveItemWhenQuantitySetToZero() {
+        UserId userId = new UserId("user-1");
+        CartId cartId = new CartId("cart-1");
+        Cart cart = new Cart(cartId, userId);
+        ProductId pid = new ProductId("product-1");
+
+        cart.addItem(pid, 2);
+        cart.updateItemQuantity(pid, 0);
+
+        assertTrue(cart.isEmpty());
     }
 
     @Test
     void shouldThrowWhenUpdatingNonExistingItem() {
         UserId userId = new UserId("user-1");
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        CartId cartId = new CartId("cart-1");
+        Cart cart = new Cart(cartId, userId);
 
         assertThrows(
                 CartItemNotFoundException.class,
@@ -75,19 +92,21 @@ class CartTest {
     @Test
     void shouldRemoveItem() {
         UserId userId = new UserId("user-1");
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        CartId cartId = new CartId("cart-1");
+        Cart cart = new Cart(cartId, userId);
         ProductId pid = new ProductId("product-1");
 
         cart.addItem(pid, 2);
         cart.removeItem(pid);
 
-        assertTrue(cart.getItems().isEmpty());
+        assertTrue(cart.isEmpty());
     }
 
     @Test
     void shouldThrowWhenRemovingNonExistingItem() {
         UserId userId = new UserId("user-1");
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        CartId cartId = new CartId("cart-1");
+        Cart cart = new Cart(cartId, userId);
 
         assertThrows(
                 CartItemNotFoundException.class,
@@ -98,10 +117,11 @@ class CartTest {
     @Test
     void shouldClearCart() {
         UserId userId = new UserId("user-1");
-        Cart cart = new Cart(new CartId("cart-1"), userId);
+        CartId cartId = new CartId("cart-1");
+        Cart cart = new Cart(cartId, userId);
 
         cart.addItem(new ProductId("product-1"), 2);
-        cart.addItem(new ProductId("product-2"), 1);
+        cart.addItem(new ProductId("product-2"), 3);
 
         cart.clear();
 
@@ -109,17 +129,11 @@ class CartTest {
     }
 
     @Test
-    void shouldRehydrateCartWithoutApplyingBusinessRules() {
-        CartId cartId = new CartId("cart-1");
-
-        Map<ProductId, Integer> persistedItems = Map.of(
-                new ProductId("product-1"), 10,
-                new ProductId("product-2"), 5
-        );
-
+    void shouldHaveCorrectOwner() {
         UserId userId = new UserId("user-1");
-        Cart cart = Cart.rehydrate(cartId, userId, persistedItems);
+        CartId cartId = new CartId("cart-1");
+        Cart cart = new Cart(cartId, userId);
 
-        assertEquals(2, cart.getItems().size());
+        assertEquals(userId, cart.getOwnerId());
     }
 }

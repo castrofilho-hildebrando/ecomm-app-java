@@ -1,7 +1,6 @@
-src/checkstyle-12.3.0-all.jar
-./files-list.sh
 .gradle/
 build/
+./files-list.sh
 *.class
 *.jar
 *.log

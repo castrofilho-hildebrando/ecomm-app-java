@@ -20,7 +20,7 @@ public class OrderTest {
     void shouldRegisterOrderCreatedEvent() {
         Order order = new Order(
                 new OrderId("order-1"),
-                List.of(new OrderItem(new ProductId("product-1"), 1))
+                List.of(new OrderItem(new OrderProductId("product-1"), 1))
         );
 
         var events = order.pullDomainEvents();
@@ -33,7 +33,7 @@ public class OrderTest {
     void shouldRegisterOrderPaidEvent() {
         Order order = new Order(
                 new OrderId("order-1"),
-                List.of(new OrderItem(new ProductId("product-1"), 1))
+                List.of(new OrderItem(new OrderProductId("product-1"), 1))
         );
 
         order.pullDomainEvents(); // limpa OrderCreated
@@ -50,7 +50,7 @@ public class OrderTest {
     void shouldThrowWhenPayingAlreadyPaidOrder() {
         Order order = new Order(
                 new OrderId("order-1"),
-                List.of(new OrderItem(new ProductId("product-1"), 1))
+                List.of(new OrderItem(new OrderProductId("product-1"), 1))
         );
 
         order.pullDomainEvents(); // clear created

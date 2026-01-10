@@ -1,29 +1,37 @@
 package com.example.ecommerce.application.order;
 
 import com.example.ecommerce.application.event.DomainEventPublisher;
-import com.example.ecommerce.domain.cart.*;
-import com.example.ecommerce.domain.order.*;
+import com.example.ecommerce.application.security.CurrentUser;
+import com.example.ecommerce.domain.cart.Cart;
+import com.example.ecommerce.domain.cart.CartId;
+import com.example.ecommerce.domain.cart.CartOwnershipPolicy;
+import com.example.ecommerce.domain.cart.CartRepository;
 import com.example.ecommerce.domain.exception.CartNotFoundException;
 import com.example.ecommerce.domain.exception.EmptyCartException;
-import com.example.ecommerce.application.security.CurrentUser;
-import com.example.ecommerce.infrastructure.mapper.OrderMapper;
+import com.example.ecommerce.domain.order.Order;
+import com.example.ecommerce.domain.order.OrderId;
+import com.example.ecommerce.domain.order.OrderItem;
+import com.example.ecommerce.domain.order.OrderProductId;
+import com.example.ecommerce.domain.order.OrderRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 public class PlaceOrderFromCartUseCase {
+
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
-    private final DomainEventPublisher eventPublisher;
+    private final DomainEventPublisher publisher;
 
     public PlaceOrderFromCartUseCase(
             CartRepository cartRepository,
             OrderRepository orderRepository,
-            DomainEventPublisher eventPublisher
+            DomainEventPublisher publisher
     ) {
         this.cartRepository = cartRepository;
         this.orderRepository = orderRepository;
-        this.eventPublisher = eventPublisher;
+        this.publisher = publisher;
     }
 
-    // CHANGED: Return OrderView instead of void
+    @Transactional
     public OrderView execute(String cartId, CurrentUser currentUser) {
         Cart cart = cartRepository.findById(new CartId(cartId))
                 .orElseThrow(() -> new CartNotFoundException(cartId));
@@ -34,25 +42,22 @@ public class PlaceOrderFromCartUseCase {
 
         CartOwnershipPolicy.assertOwner(cart, currentUser.id());
 
-        // Create Order from Cart items
-        OrderId orderId = new OrderId("ORD-" + cartId); // Or use a proper ID generator
         Order order = new Order(
-                orderId,
-                cart.getItems().stream()
-                        .map(item -> new OrderItem(item.getProductId(), item.getQuantity()))
+                OrderId.newId(),
+                cart.getItems().values().stream()
+                        .map(item -> new OrderItem(
+                                new OrderProductId(item.getProductId().value()),
+                                item.getQuantity()
+                        ))
                         .toList()
         );
 
         orderRepository.save(order);
+        order.pullDomainEvents().forEach(publisher::publish);
 
-        // Publish events (OrderCreatedEvent, etc.)
-        order.pullDomainEvents().forEach(eventPublisher::publish);
-
-        // Clear the cart after successful order placement
         cart.clear();
         cartRepository.save(cart);
 
-        // FIX: Return the mapped view
-        return OrderMapper.toView(order);
+        return OrderView.from(order);
     }
 }

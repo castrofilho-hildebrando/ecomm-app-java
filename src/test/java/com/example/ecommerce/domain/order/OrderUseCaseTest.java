@@ -1,7 +1,5 @@
 package com.example.ecommerce.domain.order;
 
-import com.example.ecommerce.domain.cart.ProductId;
-
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,8 +15,8 @@ class OrderUseCaseTest {
         Order order = new Order(
                 orderId,
                 List.of(
-                        new OrderItem(new ProductId("product-1"), 2),
-                        new OrderItem(new ProductId("product-2"), 1)
+                        new OrderItem(new OrderProductId("product-1"), 2),
+                        new OrderItem(new OrderProductId("product-2"), 1)
                 )
         );
 
@@ -30,13 +28,13 @@ class OrderUseCaseTest {
     void shouldExposeItemsAsUnmodifiableList() {
         Order order = new Order(
                 new OrderId("order-1"),
-                List.of(new OrderItem(new ProductId("product-1"), 1))
+                List.of(new OrderItem(new OrderProductId("product-1"), 1))
         );
 
         assertThrows(
                 UnsupportedOperationException.class,
                 () -> order.getItems().add(
-                        new OrderItem(new ProductId("product-2"), 1)
+                        new OrderItem(new OrderProductId("product-2"), 1)
                 )
         );
     }
@@ -70,7 +68,7 @@ class OrderUseCaseTest {
 
     @Test
     void shouldCreateOrderItem() {
-        ProductId productId = new ProductId("product-1");
+        OrderProductId productId = new OrderProductId("product-1");
 
         OrderItem item = new OrderItem(productId, 2);
 
