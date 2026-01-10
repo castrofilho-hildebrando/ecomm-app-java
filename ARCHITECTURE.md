@@ -795,7 +795,7 @@ public class ApiExceptionHandler {
 - **In-memory repositories**: Fast, isolated tests
 
 ### Build & Dependency Management
-- **Gradle/Maven**: Build automation
+- **Gradle**: Build automation
 - **Jakarta Validation**: Request validation (`@Valid`, `@NotBlank`, `@Min`)
 
 ---
