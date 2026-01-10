@@ -1,6 +1,5 @@
 .gradle/
 build/
-./files-list.sh
 *.class
 *.jar
 *.log
