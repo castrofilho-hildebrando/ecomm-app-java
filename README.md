@@ -480,7 +480,7 @@ This project demonstrates concepts from:
 User A reads Cart (version=1)  ──┐
 User B reads Cart (version=1)  ──┤
 User A saves Cart (version=2)  ──┤  Without locking: User B's 
-User B saves Cart (overwrite!)  ──┘  changes would overwrite User A's
+User B saves Cart (overwrite!) ──┘  changes would overwrite User A's
 ```
 
 **Solution:** Version-based concurrency control with retry mechanism.
@@ -539,10 +539,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👤 Author
 
-**[Your Name]**
-- LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
+**Hildebrando de Castro**
+- LinkedIn: [linkedin.com/in/hildebrando-castro](https://www.linkedin.com/in/hildebrando-castro/)
+- GitHub: [@castrofilho-hildebrando](https://github.com/castrofilho-hildebrando)
+- Email: dev@unitytech.dev.br
 
 ---
 
