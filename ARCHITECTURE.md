@@ -38,15 +38,15 @@ The system is organized in concentric layers:
 │           Infrastructure Layer                  │
 │  (Controllers, Repositories, External Services) │
 │                                                 │
-│  ┌───────────────────────────────────────────┐ │
-│  │       Application Layer                   │ │
-│  │     (Use Cases, DTOs, Interfaces)         │ │
-│  │                                           │ │
-│  │  ┌─────────────────────────────────────┐ │ │
-│  │  │        Domain Layer                 │ │ │
-│  │  │  (Entities, Value Objects, Events)  │ │ │
-│  │  └─────────────────────────────────────┘ │ │
-│  └───────────────────────────────────────────┘ │
+│  ┌───────────────────────────────────────────┐  │
+│  │       Application Layer                   │  │
+│  │     (Use Cases, DTOs, Interfaces)         │  │
+│  │                                           │  │
+│  │  ┌─────────────────────────────────────┐  │  │
+│  │  │        Domain Layer                 │  │  │
+│  │  │  (Entities, Value Objects, Events)  │  │  │
+│  │  └─────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────┘
 ```
 
